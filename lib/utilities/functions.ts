@@ -11,7 +11,7 @@ import {
     User
 } from "discord.js";
 import * as c from "canvas";
-import { Document, WithId } from "mongodb";
+import { WithId } from "mongodb";
 import { existsSync, mkdirSync, readdirSync } from "fs";
 import { PetitioRequest } from "petitio/dist/lib/PetitioRequest";
 import { permissionNames } from "./permissions.js";
