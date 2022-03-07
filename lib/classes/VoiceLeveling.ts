@@ -74,7 +74,7 @@ export default class VoiceLeveling {
     }
 
     private async incrementExperience() {
-        const amount = Math.random() * (15 - 10) + 10;
+        const amount = Math.floor(Math.random() * (15 - 10) + 10);
         // const updatedDocuments =
         await this.client.cache.massUpdateLevelDocument(
             this.membersInVoiceChat
