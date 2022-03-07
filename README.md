@@ -10,7 +10,7 @@ NPM installed and run `npm install` to install all of our dependencies.
 Once all of our dependencies are installed please rename `.ENV_EXAMPLE` to `.env`, and
 modify the values accordingly.
 
-To run the production version of this ot please run `npm run prod`, if any errors come
+To run the production version of this bot please run `npm run prod`, if any errors come
 out feel free to contact Polar#6880 if he still works on the project!
 
 If you want to run the development version run `npm run dev`.
@@ -27,5 +27,7 @@ for any damages, issues, or problems that may arise.
 ## Credits
 
 [Geek](https://github.com/GamingGeek) @ [FireDiscordBot](https://github.com/): The [widget](https://inv.wtf) below, as well as the discord.js [fork](https://github.com/FireDiscordBot/discord.js) that we use.
+
+[Commandtechno]() @ [Quantum Society](https://discord.gg/Eq3pvST46A): Was a big help with the image generation code.
 
 [![Polar's Cafe Invite](https://inv.wtf/widget/polar)](https://inv.wtf/polar)
