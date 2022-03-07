@@ -218,6 +218,7 @@ export default class BetterClient extends Client {
      */
     override async login() {
         await this.mongo.connect();
+        await this.redis.connect();
         return super.login();
     }
 
