@@ -102,7 +102,7 @@ export default class DropDown {
             } to run this drop down.`;
         else if (
             this.clientPermissions &&
-            !interaction.memberPermissions?.has(this.clientPermissions)
+            !interaction.guild?.me?.permissions.has(this.clientPermissions)
         )
             return `You need ${
                 this.clientPermissions.length > 1 ? "" : "the"

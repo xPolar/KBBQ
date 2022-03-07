@@ -102,7 +102,7 @@ export default class Button {
             } to run this button.`;
         else if (
             this.clientPermissions &&
-            !interaction.memberPermissions?.has(this.clientPermissions)
+            !interaction.guild?.me?.permissions.has(this.clientPermissions)
         )
             return `I need ${
                 this.permissions.length > 1 ? "" : "the"
