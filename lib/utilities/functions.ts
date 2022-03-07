@@ -494,14 +494,16 @@ export default class Functions {
                     document => document.userId === member.user.id
                 ) as WithId<Document>
             );
-            if (index !== -1)
+            if (index !== -1) {
+                message += "\n━━━━━━━━━━━━━━";
                 for (let i = -1; i <= 1; i++) {
-                    message += `${index + i + 1}. <@${
+                    message += `\n${index + i + 1}. <@${
                         documents[index + i].userId
                     }> **Level ${this.client.functions.calculateLevelFromExperience(
                         documents[index + i].experience
-                    )}** XP: ${documents[index + i].experience}\n`;
+                    )}** XP: ${documents[index + i].experience}`;
                 }
+            }
         }
         return message;
     }

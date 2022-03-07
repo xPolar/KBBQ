@@ -5,7 +5,7 @@ export default {
     botName: "kbbq",
 
     version: "1.0.0",
-    admins: ["619284841187246090", "587352234715774976"],
+    admins: ["619284841187246090", "665303663148924968"],
 
     presence: {
         status: "online",
