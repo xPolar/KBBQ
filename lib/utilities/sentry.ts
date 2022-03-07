@@ -21,7 +21,7 @@ export default function init() {
          * Capture a Sentry error about an interaction.
          * @param error The error to capture.
          * @param interaction The interaction that caused the error.
-         * @return The sentry error ID.
+         * @returns The sentry error ID.
          */
         captureWithInteraction: (
             error: any,
@@ -45,7 +45,7 @@ export default function init() {
          * Capture a Sentry error about a message.
          * @param error The error to capture.
          * @param message The message that caused the error.
-         * @return The sentry error ID.
+         * @returns The sentry error ID.
          */
         captureWithMessage: (
             error: any,
@@ -69,7 +69,7 @@ export default function init() {
          * Capture a Sentry error with extra details.
          * @param error The error to capture.
          * @param extras Extra details to add to the error.
-         * @return The sentry error ID.
+         * @returns The sentry error ID.
          */
         captureWithExtras: (error: any, extras: Record<string, any>) => {
             return new Promise((resolve, _) => {

@@ -2,8 +2,9 @@ import {
     ApplicationCommandOptionData,
     MessageActionRow,
     MessageEmbed,
-    PermissionString
+    PermissionString, Snowflake
 } from "discord.js";
+import {Document, WithId} from "mongodb";
 
 export interface SlashCommandOptions {
     description?: string;
@@ -57,4 +58,10 @@ export interface CachedStats {
 export interface GenerateTimestampOptions {
     timestamp?: Date | number;
     type?: "t" | "T" | "d" | "D" | "f" | "F" | "R";
+}
+
+export interface UserLevelDocument extends WithId<Document> {
+    userId: Snowflake;
+    experience: number;
+    level: number;
 }

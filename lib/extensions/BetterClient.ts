@@ -1,4 +1,5 @@
 import { resolve } from "path";
+import { createClient } from "redis";
 import { MongoClient } from "mongodb";
 import * as metrics from "datadog-metrics";
 import { Client, ClientOptions, Collection } from "discord.js";
@@ -15,6 +16,8 @@ import ButtonHandler from "../classes/ButtonHandler.js";
 import DropDownHandler from "../classes/DropDownHandler.js";
 import TextCommandHandler from "../classes/TextCommandHandler.js";
 import SlashCommandHandler from "../classes/SlashCommandHandler.js";
+import Cache from "../classes/Cache.js";
+import VoiceLeveling from "../classes/VoiceLeveling.js";
 
 export default class BetterClient extends Client {
     /**
@@ -88,6 +91,11 @@ export default class BetterClient extends Client {
     public readonly mongo: MongoClient;
 
     /**
+     * Our redis database.
+     */
+    public readonly redis;
+
+    /**
      * Our data dog client.
      */
     public readonly dataDog: typeof metrics;
@@ -111,6 +119,16 @@ export default class BetterClient extends Client {
      * __dirname is not in our version of ECMA, so we make do with a shitty fix.
      */
     public readonly __dirname: string;
+
+    /**
+     * Our client's cache.
+     */
+    public readonly cache: Cache;
+
+    /**
+     * Our VoiceLeveling class.
+     */
+    public readonly voiceLeveling: VoiceLeveling;
 
     /**
      * Create our client.
@@ -141,6 +159,10 @@ export default class BetterClient extends Client {
         this.events = new Map();
 
         this.mongo = new MongoClient(process.env.MONGO_URI);
+        this.redis = createClient({ socket: { port: 8908 } });
+
+        this.cache = new Cache(this);
+        this.voiceLeveling = new VoiceLeveling(this);
 
         this.version =
             process.env.NODE_ENV === "development"
