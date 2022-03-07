@@ -105,11 +105,14 @@ export default class TextCommandHandler {
         if (
             !command ||
             (process.env.NODE_ENV === "development" &&
-                !this.client.config.admins.includes(message.author.id)) ||
-            (this.client.application?.owner instanceof User &&
-                this.client.application.owner.id !== message.author.id) ||
-            (this.client.application?.owner instanceof Team &&
-                !this.client.application?.owner.members.has(message.author.id))
+                (!this.client.config.admins.includes(message.author.id) ||
+                    (this.client.application?.owner instanceof User &&
+                        this.client.application.owner.id !==
+                            message.author.id) ||
+                    (this.client.application?.owner instanceof Team &&
+                        !this.client.application?.owner.members.has(
+                            message.author.id
+                        ))))
         )
             return;
 

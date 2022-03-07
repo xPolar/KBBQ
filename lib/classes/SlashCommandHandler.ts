@@ -186,15 +186,14 @@ export default class SlashCommandHandler {
         }
 
         if (
-            !command ||
-            (process.env.NODE_ENV === "development" &&
-                !this.client.config.admins.includes(interaction.user.id)) ||
-            (this.client.application?.owner instanceof User &&
-                this.client.application.owner.id !== interaction.user.id) ||
-            (this.client.application?.owner instanceof Team &&
-                !this.client.application?.owner.members.has(
-                    interaction.user.id
-                ))
+            process.env.NODE_ENV === "development" &&
+            (!this.client.config.admins.includes(interaction.user.id) ||
+                (this.client.application?.owner instanceof User &&
+                    this.client.application.owner.id !== interaction.user.id) ||
+                (this.client.application?.owner instanceof Team &&
+                    !this.client.application?.owner.members.has(
+                        interaction.user.id
+                    )))
         )
             return;
 
