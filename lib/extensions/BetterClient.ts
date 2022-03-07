@@ -1,5 +1,4 @@
 import { resolve } from "path";
-import { createClient } from "redis";
 import { MongoClient } from "mongodb";
 import * as metrics from "datadog-metrics";
 import { Client, ClientOptions, Collection } from "discord.js";
@@ -91,11 +90,6 @@ export default class BetterClient extends Client {
     public readonly mongo: MongoClient;
 
     /**
-     * Our redis database.
-     */
-    public readonly redis;
-
-    /**
      * Our data dog client.
      */
     public readonly dataDog: typeof metrics;
@@ -159,7 +153,6 @@ export default class BetterClient extends Client {
         this.events = new Map();
 
         this.mongo = new MongoClient(process.env.MONGO_URI);
-        this.redis = createClient({ database: 2 });
 
         this.cache = new Cache(this);
         this.voiceLeveling = new VoiceLeveling(this);
@@ -218,7 +211,6 @@ export default class BetterClient extends Client {
      */
     override async login() {
         await this.mongo.connect();
-        await this.redis.connect();
         return super.login();
     }
 
