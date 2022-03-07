@@ -165,21 +165,21 @@ export default class VoiceLeveling {
         //             allowedMentions: { parse: ["users"] }
         //         });
         //     }
-            this.client.dataDog.gauge(
-                "voice.members",
-                this.membersInVoiceChat.size
-            );
-            this.client.dataDog.gauge(
-                "voice.validMembers",
-                updatedDocuments.length
-            );
-            this.client.dataDog.increment(
-                "voice.minutes",
-                this.membersInVoiceChat.size
-            );
-            this.client.logger.info(
-                `Incremented voiceExperience by ${amount} for ${updatedDocuments.length} members`
-            );
-        }
+        //     this.client.dataDog.gauge(
+        //         "voice.members",
+        //         this.membersInVoiceChat.size
+        //     );
+        //     this.client.dataDog.gauge(
+        //         "voice.validMembers",
+        //         updatedDocuments.length
+        //     );
+        //     this.client.dataDog.increment(
+        //         "voice.minutes",
+        //         this.membersInVoiceChat.size
+        //     );
+        //     this.client.logger.info(
+        //         `Incremented voiceExperience by ${amount} for ${updatedDocuments.length} members`
+        //     );
+        // }
     }
 }
