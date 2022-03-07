@@ -492,7 +492,7 @@ export default class Functions {
             const index = documents.indexOf(
                 documents.find(
                     document => document.userId === member.user.id
-                ) as WithId<Document>
+                ) as WithId<UserLevelDocument>
             );
             if (index !== -1) {
                 message += "\n━━━━━━━━━━━━━━";
