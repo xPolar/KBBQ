@@ -16,7 +16,8 @@ out feel free to contact Polar#6880 if he still works on the project!
 If you want to run the development version run `npm run dev`.
 
 The only difference between the production and development version is that the development
-version won't log statuses into our desired console webhook.
+version won't log statuses into our desired console webhook and only listens to users within
+the admin configuration option.
 
 ### Licensing
 
