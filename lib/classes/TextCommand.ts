@@ -1,7 +1,7 @@
 import { format } from "@lukeed/ms";
 import { MessageEmbedOptions, PermissionString, Snowflake } from "discord.js";
 import { TextCommandOptions } from "../../typings";
-import BetterMessage from "../extensions/BetterMessage";
+import BetterMessage from "../extensions/BetterMessage.js";
 import BetterClient from "../extensions/BetterClient.js";
 
 export default class TextCommand {

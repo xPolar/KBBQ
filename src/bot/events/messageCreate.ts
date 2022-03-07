@@ -1,7 +1,7 @@
 import { ClientEvents, Snowflake } from "discord.js";
 import EventHandler from "../../../lib/classes/EventHandler.js";
 import BetterMessage from "../../../lib/extensions/BetterMessage.js";
-import BetterClient from "../../../lib/extensions/BetterClient";
+import BetterClient from "../../../lib/extensions/BetterClient.js";
 
 export default class MessageCreate extends EventHandler {
     private readonly expCooldown: Record<Snowflake, number>;

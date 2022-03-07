@@ -2,9 +2,10 @@ import {
     ApplicationCommandOptionData,
     MessageActionRow,
     MessageEmbed,
-    PermissionString, Snowflake
+    PermissionString,
+    Snowflake
 } from "discord.js";
-import {Document, WithId} from "mongodb";
+import { Document, WithId } from "mongodb";
 
 export interface SlashCommandOptions {
     description?: string;

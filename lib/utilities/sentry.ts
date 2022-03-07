@@ -2,7 +2,7 @@ import { format } from "util";
 import { load } from "dotenv-extended";
 import * as Sentry from "@sentry/node";
 import { Interaction } from "discord.js";
-import BetterMessage from "../extensions/BetterMessage";
+import BetterMessage from "../extensions/BetterMessage.js";
 
 load({
     path: process.env.NODE_ENV === "development" ? ".env.dev" : ".env.prod"

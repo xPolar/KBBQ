@@ -88,21 +88,35 @@ export default class Cache {
     }
 
     public async getAllLevelDocuments(sorted: boolean) {
-        const fetched = await (
-            await this.client.mongo
-                .db("users")
-                .collection("levels")
-                .find({}, sorted ? { sort: { experience: -1 } } : {})
-        ).toArray();
-        if (process.env.NODE_ENV === "production")
-            await Promise.all(
-                fetched.map(document =>
-                    this.client.redis.set(
-                        `${document.userId}.leveling`,
-                        JSON.stringify(document)
-                    )
-                )
-            );
-        return fetched;
+        return (await Promise.any([
+            new Promise(resolve => {
+                this.client.mongo
+                    .db("users")
+                    .collection("levels")
+                    .find({}, sorted ? { sort: { experience: -1 } } : {})
+                    .toArray()
+                    .then(fetched => {
+                        if (process.env.NODE_ENV === "production")
+                            this.client.redis.set(
+                                "sortedLevels",
+                                JSON.stringify(fetched)
+                            );
+                        resolve(fetched);
+                    });
+            }),
+            process.env.NODE_ENV === "production"
+                ? new Promise((resolve, reject) => {
+                      this.client.redis
+                          .get("sortedLevels")
+                          .then(cached =>
+                              cached
+                                  ? resolve(JSON.parse(cached))
+                                  : reject(new Error("Not cached."))
+                          );
+                  })
+                : new Promise((_, reject) => {
+                      reject(new Error("Not in production."));
+                  })
+        ])) as Promise<UserLevelDocument[]>;
     }
 }
