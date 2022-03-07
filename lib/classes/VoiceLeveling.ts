@@ -75,27 +75,27 @@ export default class VoiceLeveling {
 
     private async incrementExperience() {
         const amount = Math.random() * (15 - 10) + 10;
-        const updatedDocuments =
-            await this.client.cache.massUpdateLevelDocument(
-                this.membersInVoiceChat
-                    .filter(
-                        member =>
-                            (!member.voice.selfDeaf &&
-                                !member.voice.selfMute &&
-                                !member.user.bot) ||
-                            member.voice.channel?.type === "GUILD_STAGE_VOICE"
-                    )
-                    .map(member => ({
-                        filter: { userId: member.id },
-                        update: {
-                            $inc: { experience: amount },
-                            $setOnInsert: {
-                                level: 0
-                            }
-                        },
-                        upsert: true
-                    }))
-            );
+        // const updatedDocuments =
+        await this.client.cache.massUpdateLevelDocument(
+            this.membersInVoiceChat
+                .filter(
+                    member =>
+                        (!member.voice.selfDeaf &&
+                            !member.voice.selfMute &&
+                            !member.user.bot) ||
+                        member.voice.channel?.type === "GUILD_STAGE_VOICE"
+                )
+                .map(member => ({
+                    filter: { userId: member.id },
+                    update: {
+                        $inc: { experience: amount },
+                        $setOnInsert: {
+                            level: 0
+                        }
+                    },
+                    upsert: true
+                }))
+        );
         // for (const document of updatedDocuments.filter(
         //     doc =>
         //         doc &&
