@@ -11,8 +11,8 @@ export default {
         status: "online",
         activities: [
             {
-                type: "PLAYING",
-                name: "with /help"
+                type: "WATCHING",
+                name: "people talk 👀"
             }
         ]
     } as PresenceData,

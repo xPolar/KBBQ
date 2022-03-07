@@ -105,8 +105,8 @@ export default class DropDown {
             !interaction.memberPermissions?.has(this.clientPermissions)
         )
             return `You need ${
-                this.permissions.length > 1 ? "" : "the"
-            } ${this.permissions
+                this.clientPermissions.length > 1 ? "" : "the"
+            } ${this.clientPermissions
                 .map(
                     permission =>
                         `**${this.client.functions.getPermissionName(
@@ -114,7 +114,7 @@ export default class DropDown {
                         )}**`
                 )
                 .join(", ")} permission${
-                this.permissions.length > 1 ? "s" : ""
+                this.clientPermissions.length > 1 ? "s" : ""
             } to run this drop down.`;
         return null;
     }

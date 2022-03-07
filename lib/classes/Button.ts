@@ -104,9 +104,9 @@ export default class Button {
             this.clientPermissions &&
             !interaction.memberPermissions?.has(this.clientPermissions)
         )
-            return `You need ${
+            return `I need ${
                 this.permissions.length > 1 ? "" : "the"
-            } ${this.permissions
+            } ${this.clientPermissions
                 .map(
                     permission =>
                         `**${this.client.functions.getPermissionName(

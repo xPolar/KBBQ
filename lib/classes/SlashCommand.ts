@@ -164,9 +164,9 @@ export default class SlashCommand {
         )
             return {
                 title: "Missing Permissions",
-                description: `You need ${
-                    this.permissions.length > 1 ? "" : "the"
-                } ${this.permissions
+                description: `I need ${
+                    this.clientPermissions.length > 1 ? "" : "the"
+                } ${this.clientPermissions
                     .map(
                         permission =>
                             `**${this.client.functions.getPermissionName(
@@ -174,7 +174,7 @@ export default class SlashCommand {
                             )}**`
                     )
                     .join(", ")} permission${
-                    this.permissions.length > 1 ? "s" : ""
+                    this.clientPermissions.length > 1 ? "s" : ""
                 } to run this command.`
             };
         else if (this.cooldown) {
