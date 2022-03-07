@@ -495,12 +495,19 @@ export default class Functions {
                 ) as WithId<Document>
             );
             if (index !== -1)
-                for (let i = -1; i <= 1; i++)
+                for (let i = -1; i <= 1; i++) {
+                    this.client.logger.debug(
+                        index,
+                        i,
+                        index + i,
+                        documents[index + i]
+                    );
                     message += `${index + i + 1}. <@${
                         documents[index + i].userId
                     }> **Level ${this.client.functions.calculateLevelFromExperience(
                         documents[index + i].experience
                     )}** XP: ${documents[index + i]}`;
+                }
         }
         return message;
     }
