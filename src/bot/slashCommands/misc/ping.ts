@@ -5,7 +5,7 @@ import BetterClient from "../../../../lib/extensions/BetterClient.js";
 export default class Ping extends SlashCommand {
     constructor(client: BetterClient) {
         super("ping", client, {
-            description: `Pong! Get the current ping / latency of ${this.client.config.botName}.`
+            description: `Pong! Get the current ping / latency of ${client.config.botName}.`
         });
     }
 
