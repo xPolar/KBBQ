@@ -159,7 +159,7 @@ export default class BetterClient extends Client {
         this.events = new Map();
 
         this.mongo = new MongoClient(process.env.MONGO_URI);
-        this.redis = createClient({ socket: { port: 8910 } });
+        this.redis = createClient({ database: 2 });
 
         this.cache = new Cache(this);
         this.voiceLeveling = new VoiceLeveling(this);
