@@ -6,22 +6,33 @@ export default class Level extends SlashCommand {
     constructor(client: BetterClient) {
         super("level", client, {
             description: `Check your or another user's level.`,
-            guildOnly: true
+            guildOnly: true,
+            options: [
+                {
+                    name: "member",
+                    description: "The member you want to view the level of.",
+                    type: "USER"
+                }
+            ]
         });
     }
 
     override async run(interaction: CommandInteraction) {
+        const user = interaction.options.getUser("member") || interaction.user;
+        const member =
+            interaction.guild!.members.cache.get(user.id) ||
+            interaction.member!;
         const document = (await this.client.cache.getLevelDocument(
-            interaction.user.id
+            member.user.id
         )) || {
-            userId: interaction.user.id,
+            userId: member.user.id,
             experience: 0,
             level: 0
         };
         return interaction.reply({
             files: [
                 await this.client.functions.generateLevelCard(
-                    interaction.member! as GuildMember,
+                    member as GuildMember,
                     document
                 )
             ]
