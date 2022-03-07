@@ -3,7 +3,7 @@ import {
     Collection,
     GuildMember,
     Snowflake,
-    TextChannel,
+    // TextChannel,
     VoiceState
 } from "discord.js";
 import BetterClient from "../extensions/BetterClient.js";
@@ -15,7 +15,7 @@ export default class VoiceLeveling {
 
     private interval?: NodeJS.Timer;
 
-    private levelUpTextChannel?: TextChannel;
+    // private levelUpTextChannel?: TextChannel;
 
     private readonly levelRoleKeys: Record<Snowflake, number>;
 
@@ -96,75 +96,75 @@ export default class VoiceLeveling {
                         upsert: true
                     }))
             );
-        for (const document of updatedDocuments.filter(
-            doc =>
-                doc &&
-                doc.level !==
-                    this.client.functions.calculateLevelFromExperience(
-                        doc.experience
-                    )
-        )) {
-            // @ts-ignore - This is used idk why ts is yelling.
-            let message = "";
-            const member = this.levelUpTextChannel?.guild.members.cache.get(
-                document?.userId || ""
-            );
-            if (
-                member &&
-                member?.voice.channel?.type === "GUILD_VOICE" &&
-                document
-            ) {
-                const [rolesAdded, rolesRemoved] =
-                    // eslint-disable-next-line no-await-in-loop
-                    await this.client.functions.distributeLevelRoles(
-                        member,
-                        document
-                    );
-                const rolesModified = rolesAdded.length || rolesRemoved.length;
-                if (rolesModified) {
-                    if (!(rolesAdded.length && rolesRemoved.length))
-                        message += " and";
-                    if (rolesAdded.length)
-                        message += ` earned the ${rolesAdded
-                            .map(role => role.name)
-                            .join(", ")} role${
-                            rolesAdded.length > 1 ? "s" : ""
-                        }`;
-                    if (rolesAdded.length && rolesRemoved.length)
-                        message += " and";
-                    if (rolesRemoved.length)
-                        message += ` lost the ${rolesRemoved
-                            .map(role => role.name)
-                            .join(", ")} role${
-                            rolesRemoved.length > 1 ? "s" : ""
-                        }`;
-                }
-                const level =
-                    this.client.functions.calculateLevelFromExperience(
-                        document.experience
-                    );
-                // eslint-disable-next-line no-await-in-loop
-                await this.client.cache.updateLevelDocument({
-                    filter: { userId: member.id },
-                    update: {
-                        $set: {
-                            level
-                        }
-                    }
-                });
-                this.client.logger.info(
-                    `${member.user.tag} has gone ${level} day${
-                        level === 1 ? "" : "s"
-                    }\`${rolesModified ? message : ""}!`.replace("`", "")
-                );
-                // eslint-disable-next-line no-await-in-loop
-                await member.send({
-                    content: `You've gone ${level} day${
-                        level === 1 ? "" : "s"
-                    }\`${rolesModified ? message : ""}!`,
-                    allowedMentions: { parse: ["users"] }
-                });
-            }
+        // for (const document of updatedDocuments.filter(
+        //     doc =>
+        //         doc &&
+        //         doc.level !==
+        //             this.client.functions.calculateLevelFromExperience(
+        //                 doc.experience
+        //             )
+        // )) {
+        //     // @ts-ignore - This is used idk why ts is yelling.
+        //     let message = "";
+        //     const member = this.levelUpTextChannel?.guild.members.cache.get(
+        //         document?.userId || ""
+        //     );
+        //     if (
+        //         member &&
+        //         member?.voice.channel?.type === "GUILD_VOICE" &&
+        //         document
+        //     ) {
+        //         const [rolesAdded, rolesRemoved] =
+        //             // eslint-disable-next-line no-await-in-loop
+        //             await this.client.functions.distributeLevelRoles(
+        //                 member,
+        //                 document
+        //             );
+        //         const rolesModified = rolesAdded.length || rolesRemoved.length;
+        //         if (rolesModified) {
+        //             if (!(rolesAdded.length && rolesRemoved.length))
+        //                 message += " and";
+        //             if (rolesAdded.length)
+        //                 message += ` earned the ${rolesAdded
+        //                     .map(role => role.name)
+        //                     .join(", ")} role${
+        //                     rolesAdded.length > 1 ? "s" : ""
+        //                 }`;
+        //             if (rolesAdded.length && rolesRemoved.length)
+        //                 message += " and";
+        //             if (rolesRemoved.length)
+        //                 message += ` lost the ${rolesRemoved
+        //                     .map(role => role.name)
+        //                     .join(", ")} role${
+        //                     rolesRemoved.length > 1 ? "s" : ""
+        //                 }`;
+        //         }
+        //         const level =
+        //             this.client.functions.calculateLevelFromExperience(
+        //                 document.experience
+        //             );
+        //         // eslint-disable-next-line no-await-in-loop
+        //         await this.client.cache.updateLevelDocument({
+        //             filter: { userId: member.id },
+        //             update: {
+        //                 $set: {
+        //                     level
+        //                 }
+        //             }
+        //         });
+        //         this.client.logger.info(
+        //             `${member.user.tag} has gone ${level} day${
+        //                 level === 1 ? "" : "s"
+        //             }\`${rolesModified ? message : ""}!`.replace("`", "")
+        //         );
+        //         // eslint-disable-next-line no-await-in-loop
+        //         await member.send({
+        //             content: `You've gone ${level} day${
+        //                 level === 1 ? "" : "s"
+        //             }\`${rolesModified ? message : ""}!`,
+        //             allowedMentions: { parse: ["users"] }
+        //         });
+        //     }
             this.client.dataDog.gauge(
                 "voice.members",
                 this.membersInVoiceChat.size
