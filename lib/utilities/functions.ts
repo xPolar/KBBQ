@@ -499,7 +499,7 @@ export default class Functions {
             if (index !== -1) {
                 message += "\n━━━━━━━━━━━━━━";
                 for (let i = -1; i <= 1; i++) {
-                    message += `\n${index + i + 1}. <@${
+                    message += `\n${index + i + 11}. <@${
                         documents[index + i].userId
                     }> **Level ${this.client.functions.calculateLevelFromExperience(
                         documents[index + i].experience
