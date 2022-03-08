@@ -287,12 +287,7 @@ export default class Functions {
      * @returns Their current level.
      */
     public calculateLevelFromExperience(experience: number): number {
-        let level = 0;
-        while (experience >= this.calculateExperienceFromLevel(level)) {
-            experience -= this.calculateExperienceFromLevel(level);
-            level++;
-        }
-        return level;
+        return Math.floor(Math.sqrt((experience * 9) / 625)) || 0;
     }
 
     /**
@@ -301,7 +296,7 @@ export default class Functions {
      * @returns Their current experience.
      */
     public calculateExperienceFromLevel(level: number): number {
-        return 5 * level ** 2 + 50 * level + 100;
+        return Math.ceil((625 * level ** 2) / 9);
     }
 
     /**
