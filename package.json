@@ -1,25 +1,13 @@
 {
-    "name": "typescript-discord-boilerplate",
+    "name": "kbbq",
     "version": "1.0.0",
-    "description": ".",
+    "description": "Custom Discord bot for discord.gg/kbbq.",
     "main": "dist/src/index.js",
     "type": "module",
     "scripts": {
         "build": "tsc && cross-env NODE_ENV=development node .",
-        "start": "cross-env NODE_ENV=production node .",
-        "redis": "redis-server --port 8909 --daemonize yes"
+        "start": "cross-env NODE_ENV=production node ."
     },
-    "repository": {
-        "type": "git",
-        "url": "git+"
-    },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "bugs": {
-        "url": ""
-    },
-    "homepage": "",
     "dependencies": {
         "@lukeed/ms": "^2.0.0",
         "@sentry/node": "^6.15.0",
