@@ -37,7 +37,7 @@ export default class MessageCreate extends EventHandler {
                 filter: { userId: message.author.id },
                 update: {
                     $inc: {
-                        experience: Math.floor(Math.random() * 16) + 15
+                        experience: (Math.floor(Math.random() * 16) + 15) * 2
                     },
                     $setOnInsert: {
                         level: 0
