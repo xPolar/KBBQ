@@ -1,4 +1,3 @@
-import { MessageEmbedOptions, Team, User } from "discord.js";
 import { inspect } from "util";
 import TextCommand from "../../../../lib/classes/TextCommand.js";
 import BetterClient from "../../../../lib/extensions/BetterClient.js";
@@ -10,21 +9,6 @@ export default class Eval extends TextCommand {
             description: "Evaluates arbitrary JavaScript code.",
             devOnly: true
         });
-    }
-
-    override async preCheck(
-        message: BetterMessage
-    ): Promise<[boolean, MessageEmbedOptions?]> {
-        await this.client.application?.fetch();
-        return [
-            (this.client.config.admins.includes(message.author.id) &&
-                this.client.application?.owner instanceof User &&
-                this.client.application?.owner.id === message.author.id) ||
-                (this.client.application?.owner instanceof Team &&
-                    this.client.application?.owner.members.has(
-                        message.author.id
-                    ))
-        ];
     }
 
     override async run(message: BetterMessage, args: string[]) {
