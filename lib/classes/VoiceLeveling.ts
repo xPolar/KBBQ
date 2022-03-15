@@ -33,7 +33,7 @@ export default class VoiceLeveling {
         this.client.channels.cache
             .filter(
                 channel =>
-                    ["GUILD_VOICE", "GUILD_STAGE+VOICE"].includes(
+                    ["GUILD_VOICE", "GUILD_STAGE_VOICE"].includes(
                         channel.type
                     ) && (channel as BaseGuildVoiceChannel).members.size > 0
             )
@@ -74,7 +74,7 @@ export default class VoiceLeveling {
     }
 
     private async incrementExperience() {
-        const amount = (Math.floor(Math.random() * (10 - 5) + 5)) * 2;
+        const amount = Math.floor(Math.random() * (10 - 5) + 5) * 2;
         const updatedDocuments =
             await this.client.cache.massUpdateLevelDocument(
                 this.membersInVoiceChat
@@ -155,13 +155,13 @@ export default class VoiceLeveling {
                 this.client.logger.info(
                     `${member.user.tag} has gone ${level} day${
                         level === 1 ? "" : "s"
-                    }\`${rolesModified ? message : ""}!`.replace("`", "")
+                    } without touching grass${rolesModified ? message : ""}!`
                 );
                 // eslint-disable-next-line no-await-in-loop
                 await member.send({
                     content: `You've gone ${level} day${
                         level === 1 ? "" : "s"
-                    }\`${rolesModified ? message : ""}!`,
+                    } without touching grass${rolesModified ? message : ""}!`,
                     allowedMentions: { parse: ["users"] }
                 });
             }

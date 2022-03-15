@@ -1,7 +1,7 @@
 import { format } from "@lukeed/ms";
 import { MessageEmbedOptions, PermissionString, Snowflake } from "discord.js";
 import { TextCommandOptions } from "../../typings";
-import BetterMessage from "../extensions/BetterMessage.js";
+import BetterMessage from "../extensions/BetterMessage";
 import BetterClient from "../extensions/BetterClient.js";
 
 export default class TextCommand {
@@ -27,25 +27,21 @@ export default class TextCommand {
 
     /**
      * The permissions the client requires to execute this text command.
-     * @private
      */
     private readonly clientPermissions: PermissionString[];
 
     /**
      * Whether this text command is only for developers.
-     * @private
      */
     private readonly devOnly: boolean;
 
     /**
      * Whether this text command is only to be used in guilds.
-     * @private
      */
     private readonly guildOnly: boolean;
 
     /**
      * Whether this slash command is only to be used by guild owners.
-     * @private
      */
     private readonly ownerOnly: boolean;
 
@@ -127,22 +123,19 @@ export default class TextCommand {
             };
         else if (
             this.devOnly &&
-            !this.client.config.admins.includes(message.author.id)
+            !this.client.functions.isDeveloper(message.author.id)
         )
             return {
                 title: "Missing Permissions",
-                description:
-                    "This command can only be used by the bot developer."
+                description: "This command can only be used by my developers!"
             };
         else if (
-            this.permissions.length > 0 &&
+            this.permissions.length &&
             !message.member?.permissions.has(this.permissions)
         )
             return {
                 title: "Missing Permissions",
-                description: `You need ${
-                    this.permissions.length > 1 ? "" : "the"
-                } ${this.permissions
+                description: `You need the ${this.permissions
                     .map(
                         permission =>
                             `**${this.client.functions.getPermissionName(
@@ -154,14 +147,12 @@ export default class TextCommand {
                 } to run this command.`
             };
         else if (
-            this.clientPermissions.length > 0 &&
+            this.clientPermissions.length &&
             !message.guild?.me?.permissions.has(this.clientPermissions)
         )
             return {
                 title: "Missing Permissions",
-                description: `I need ${
-                    this.clientPermissions.length > 1 ? "" : "the"
-                } ${this.clientPermissions
+                description: `I need the ${this.clientPermissions
                     .map(
                         permission =>
                             `**${this.client.functions.getPermissionName(
@@ -210,6 +201,5 @@ export default class TextCommand {
      * @param _message The message that was created.
      * @param _args
      */
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     public async run(_message: BetterMessage, _args: string[]): Promise<any> {}
 }

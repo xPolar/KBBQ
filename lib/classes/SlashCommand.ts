@@ -27,31 +27,26 @@ export default class SlashCommand {
 
     /**
      * The permissions a user would require to execute this slash command.
-     * @private
      */
     private readonly permissions: PermissionString[];
 
     /**
      * The permissions the client requires to execute this slash command.
-     * @private
      */
     private readonly clientPermissions: PermissionString[];
 
     /**
      * Whether this slash command is only for developers.
-     * @private
      */
     private readonly devOnly: boolean;
 
     /**
      * Whether this slash command is only to be used in guilds.
-     * @private
      */
     private readonly guildOnly: boolean;
 
     /**
      * Whether this slash command is only to be used by guild owners.
-     * @private
      */
     private readonly ownerOnly: boolean;
 
@@ -134,20 +129,21 @@ export default class SlashCommand {
                 description:
                     "This command can only be ran by the owner of this guild!"
             };
-        else if (this.devOnly && !this.client.config.admins)
+        else if (
+            this.devOnly &&
+            !this.client.functions.isDeveloper(interaction.user.id)
+        )
             return {
                 title: "Missing Permissions",
-                description: "This command can only be ran by my developer!"
+                description: "This command can only be used by my developers!"
             };
         else if (
-            this.permissions &&
+            this.permissions.length &&
             !interaction.memberPermissions?.has(this.permissions)
         )
             return {
                 title: "Missing Permissions",
-                description: `You need ${
-                    this.permissions.length > 1 ? "" : "the"
-                } ${this.permissions
+                description: `You need the ${this.permissions
                     .map(
                         permission =>
                             `**${this.client.functions.getPermissionName(
@@ -159,14 +155,12 @@ export default class SlashCommand {
                 } to run this command.`
             };
         else if (
-            this.clientPermissions &&
-            !interaction.guild?.me?.permissions.has(this.clientPermissions)
+            this.clientPermissions.length &&
+            !interaction.memberPermissions?.has(this.clientPermissions)
         )
             return {
                 title: "Missing Permissions",
-                description: `I need ${
-                    this.clientPermissions.length > 1 ? "" : "the"
-                } ${this.clientPermissions
+                description: `I need the ${this.clientPermissions
                     .map(
                         permission =>
                             `**${this.client.functions.getPermissionName(
@@ -217,6 +211,5 @@ export default class SlashCommand {
      * Run this slash command.
      * @param _interaction The interaction that was created.
      */
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     public async run(_interaction: CommandInteraction): Promise<any> {}
 }

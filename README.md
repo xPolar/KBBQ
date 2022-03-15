@@ -1,6 +1,6 @@
 # KBBQ
 
-Welcome to the repository for the kaoku bot, a bot created to help [KBBQ](https://discord.gg/kbbq).
+Welcome to the repository for the KBBQ bot, a bot created to help [KBBQ](https://discord.gg/kbbq).
 
 ## Self Hosting
 
@@ -29,6 +29,6 @@ for any damages, issues, or problems that may arise.
 
 [Geek](https://github.com/GamingGeek) @ [FireDiscordBot](https://github.com/): The [widget](https://inv.wtf) below, as well as the discord.js [fork](https://github.com/FireDiscordBot/discord.js) that we use.
 
-[Commandtechno]() @ [Quantum Society](https://discord.gg/Eq3pvST46A): Was a big help with the image generation code.
+[Commandtechno](https://github.com/Commandtechno) @ [Quantum Society](https://discord.gg/Eq3pvST46A): Was a big help with the image generation code.
 
 [![Polar's Cafe Invite](https://inv.wtf/widget/polar)](https://inv.wtf/polar)
