@@ -8,6 +8,8 @@ import {
     MessageEmbedOptions,
     PermissionString,
     Role,
+    Snowflake,
+    Team,
     User
 } from "discord.js";
 import * as c from "canvas";
@@ -503,5 +505,30 @@ export default class Functions {
             }
         }
         return message;
+    }
+
+    /**
+     * Get whether a user is a developer or not.
+     * @param snowflake The user ID to check.
+     * @returns Whether the user is a developer or not.
+     */
+    public async isDeveloper(snowflake: Snowflake) {
+        await this.client.application?.fetch();
+        return (
+            this.isAdmin(snowflake) &&
+            ((this.client.application?.owner instanceof User &&
+                this.client.application.owner.id === snowflake) ||
+                (this.client.application?.owner instanceof Team &&
+                    this.client.application.owner.members.has(snowflake)))
+        );
+    }
+
+    /**
+     * Get whether a user is an admin or not.
+     * @param snowflake The user ID to check.
+     * @returns Whether the user is an admin or not.
+     */
+    public isAdmin(snowflake: Snowflake) {
+        return this.client.config.admins.includes(snowflake);
     }
 }

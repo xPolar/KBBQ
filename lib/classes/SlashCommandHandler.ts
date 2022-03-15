@@ -197,14 +197,11 @@ export default class SlashCommandHandler {
                     )
                 );
             return interaction.reply(
-                this.client.functions.generateErrorMessage(
-                    {
-                        title: "Non Existent Command",
-                        description: `The command \`${interaction.commandName}\` doesn't exist on this instance of ${this.client.user?.username}, this has already been reported to my developers and the command has been removed!`,
-                        footer: { text: `Sentry Event ID: ${sentryId} ` }
-                    },
-                    true
-                )
+                this.client.functions.generateErrorMessage({
+                    title: "Non Existent Command",
+                    description: `The command \`${interaction.commandName}\` doesn't exist on this instance of ${this.client.user?.username}, this has already been reported to my developers and the command has been removed!`,
+                    footer: { text: `Sentry Event ID: ${sentryId} ` }
+                })
             );
         }
 
@@ -268,14 +265,11 @@ export default class SlashCommandHandler {
                         error,
                         interaction
                     );
-                const toSend = this.client.functions.generateErrorMessage(
-                    {
-                        title: "An Error Has Occurred",
-                        description: `An unexpected error was encountered while running \`${interaction.commandName}\`, my developers have already been notified! Feel free to join my support server in the mean time!`,
-                        footer: { text: `Sentry Event ID: ${sentryId} ` }
-                    },
-                    true
-                );
+                const toSend = this.client.functions.generateErrorMessage({
+                    title: "An Error Has Occurred",
+                    description: `An unexpected error was encountered while running \`${interaction.commandName}\`, my developers have already been notified! Feel free to join my support server in the mean time!`,
+                    footer: { text: `Sentry Event ID: ${sentryId} ` }
+                });
                 if (interaction.replied) return interaction.followUp(toSend);
                 else return interaction.reply({ ...toSend, ephemeral: true });
             });
