@@ -144,7 +144,7 @@ export default class SlashCommandHandler {
      * @param interaction The interaction created.
      */
     public async handleCommand(interaction: CommandInteraction) {
-        interaction.deferReply();
+        interaction.deferReply({ fetchReply: true });
         const command = this.fetchCommand(interaction.commandName);
         if (!command) {
             this.client.logger.error(
@@ -196,7 +196,7 @@ export default class SlashCommandHandler {
                             })
                     )
                 );
-            return interaction.reply(
+            return interaction.editReply(
                 this.client.functions.generateErrorMessage({
                     title: "Non Existent Command",
                     description: `The command \`${interaction.commandName}\` doesn't exist on this instance of ${this.client.user?.username}, this has already been reported to my developers and the command has been removed!`,
@@ -213,14 +213,14 @@ export default class SlashCommandHandler {
 
         const missingPermissions = await command.validate(interaction);
         if (missingPermissions)
-            return interaction.reply(
+            return interaction.editReply(
                 this.client.functions.generateErrorMessage(missingPermissions)
             );
 
         const preChecked = await command.preCheck(interaction);
         if (!preChecked[0]) {
             if (preChecked[1])
-                await interaction.reply(
+                await interaction.editReply(
                     this.client.functions.generateErrorMessage(preChecked[1])
                 );
             return;
@@ -239,7 +239,7 @@ export default class SlashCommandHandler {
         interaction: CommandInteraction
     ): Promise<any> {
         if (this.coolDowns.has(interaction.user.id))
-            return interaction.reply(
+            return interaction.editReply(
                 this.client.functions.generateErrorMessage({
                     title: "Command Cooldown",
                     description:
@@ -271,7 +271,10 @@ export default class SlashCommandHandler {
                     footer: { text: `Sentry Event ID: ${sentryId} ` }
                 });
                 if (interaction.replied) return interaction.followUp(toSend);
-                else return interaction.reply({ ...toSend, ephemeral: true });
+                else
+                    return interaction.editReply({
+                        ...toSend
+                    });
             });
         this.coolDowns.add(interaction.user.id);
         setTimeout(

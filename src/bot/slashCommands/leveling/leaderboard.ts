@@ -11,7 +11,7 @@ export default class Leaderboard extends SlashCommand {
     }
 
     override async run(interaction: CommandInteraction) {
-        return interaction.reply(
+        return interaction.editReply(
             this.client.functions.generatePrimaryMessage({
                 title: "Level Leaderboard",
                 description:

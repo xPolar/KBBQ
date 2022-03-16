@@ -10,7 +10,7 @@ export default class InteractionCreate extends EventHandler {
         // @ts-ignore
         if (this.client.mongo.topology.s.state !== "connected")
             // @ts-ignore
-            return interaction.reply(
+            return interaction.editReply(
                 this.client.functions.generateErrorMessage({
                     title: "Not Ready",
                     description:
@@ -28,7 +28,7 @@ export default class InteractionCreate extends EventHandler {
         this.client.logger.error(error);
         this.client.logger.sentry.captureWithInteraction(error, interaction);
         // @ts-ignore
-        return interaction.reply(
+        return interaction.editReply(
             this.client.functions.generateErrorMessage({
                 title: "Invalid Interaction",
                 description: "I've never seen this type of interaction"

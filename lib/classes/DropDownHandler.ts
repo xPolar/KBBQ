@@ -85,7 +85,7 @@ export default class DropdownHandler {
      * @param interaction The interaction created.
      */
     public async handleDropDown(interaction: SelectMenuInteraction) {
-        interaction.deferReply();
+        interaction.deferReply({ fetchReply: true });
         const dropDown = this.fetchDropDown(interaction.message!.id);
         if (
             !dropDown ||
@@ -96,14 +96,14 @@ export default class DropdownHandler {
 
         const missingPermissions = dropDown.validate(interaction);
         if (missingPermissions)
-            return interaction.reply(
+            return interaction.editReply(
                 this.client.functions.generateErrorMessage(missingPermissions)
             );
 
         const preChecked = await dropDown.preCheck(interaction);
         if (!preChecked[0]) {
             if (preChecked[1])
-                await interaction.reply(
+                await interaction.editReply(
                     this.client.functions.generateErrorMessage(preChecked[1])
                 );
             return;
@@ -122,7 +122,7 @@ export default class DropdownHandler {
         interaction: SelectMenuInteraction
     ): Promise<any> {
         if (this.coolDowns.has(interaction.user.id))
-            return interaction.reply(
+            return interaction.editReply(
                 this.client.functions.generateErrorMessage({
                     title: "Command Cooldown",
                     description:
@@ -152,7 +152,10 @@ export default class DropdownHandler {
                     footer: { text: `Sentry Event ID: ${sentryId} ` }
                 });
                 if (interaction.replied) return interaction.followUp(toSend);
-                else return interaction.reply({ ...toSend, ephemeral: true });
+                else
+                    return interaction.editReply({
+                        ...toSend
+                    });
             });
         this.coolDowns.add(interaction.user.id);
         setTimeout(

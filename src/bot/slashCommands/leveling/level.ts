@@ -29,7 +29,7 @@ export default class Level extends SlashCommand {
             experience: 0,
             level: 0
         };
-        return interaction.reply({
+        return interaction.editReply({
             files: [
                 await this.client.functions.generateLevelCard(
                     member as GuildMember,
