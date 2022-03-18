@@ -10,6 +10,7 @@ export default class Ping extends SlashCommand {
     }
 
     override async run(interaction: CommandInteraction) {
+        await interaction.deferReply({ fetchReply: true, ephemeral: true });
         const message = (await interaction.editReply({
             content: "Ping?"
         })) as Message;

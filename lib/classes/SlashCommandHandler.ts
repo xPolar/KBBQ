@@ -144,7 +144,6 @@ export default class SlashCommandHandler {
      * @param interaction The interaction created.
      */
     public async handleCommand(interaction: CommandInteraction) {
-        await interaction.deferReply({ fetchReply: true });
         const command = this.fetchCommand(interaction.commandName);
         if (!command) {
             this.client.logger.error(

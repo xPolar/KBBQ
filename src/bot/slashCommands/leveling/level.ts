@@ -18,6 +18,7 @@ export default class Level extends SlashCommand {
     }
 
     override async run(interaction: CommandInteraction) {
+        await interaction.deferReply({ fetchReply: true });
         const user = interaction.options.getUser("member") || interaction.user;
         const member =
             interaction.guild!.members.cache.get(user.id) ||
