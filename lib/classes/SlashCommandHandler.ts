@@ -195,7 +195,7 @@ export default class SlashCommandHandler {
                             })
                     )
                 );
-            return interaction.editReply(
+            return interaction.reply(
                 this.client.functions.generateErrorMessage({
                     title: "Non Existent Command",
                     description: `The command \`${interaction.commandName}\` doesn't exist on this instance of ${this.client.user?.username}, this has already been reported to my developers and the command has been removed!`,
@@ -212,14 +212,14 @@ export default class SlashCommandHandler {
 
         const missingPermissions = await command.validate(interaction);
         if (missingPermissions)
-            return interaction.editReply(
+            return interaction.reply(
                 this.client.functions.generateErrorMessage(missingPermissions)
             );
 
         const preChecked = await command.preCheck(interaction);
         if (!preChecked[0]) {
             if (preChecked[1])
-                await interaction.editReply(
+                await interaction.reply(
                     this.client.functions.generateErrorMessage(preChecked[1])
                 );
             return;
@@ -238,7 +238,7 @@ export default class SlashCommandHandler {
         interaction: CommandInteraction
     ): Promise<any> {
         if (this.coolDowns.has(interaction.user.id))
-            return interaction.editReply(
+            return interaction.reply(
                 this.client.functions.generateErrorMessage({
                     title: "Command Cooldown",
                     description:
@@ -271,7 +271,7 @@ export default class SlashCommandHandler {
                 });
                 if (interaction.replied) return interaction.followUp(toSend);
                 else
-                    return interaction.editReply({
+                    return interaction.reply({
                         ...toSend
                     });
             });
