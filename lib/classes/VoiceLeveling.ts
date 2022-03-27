@@ -88,7 +88,10 @@ export default class VoiceLeveling {
                     .map(member => ({
                         filter: { userId: member.id },
                         update: {
-                            $inc: { experience: amount },
+                            $inc: {
+                                experience: amount,
+                                [`${this.client.functions.getWeekOfTheYear()}.voice`]: 1
+                            },
                             $setOnInsert: {
                                 level: 0
                             }

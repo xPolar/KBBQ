@@ -169,7 +169,7 @@ export default class Functions {
      * Upload content to the hastebin we use.
      * @param content The content to upload.
      * @param type The file type to append to the end of the haste.
-     * @returns The URL to the uploaded content.
+     * @return The URL to the uploaded content.
      */
     public async uploadHaste(
         content: string,
@@ -507,6 +507,76 @@ export default class Functions {
         return message;
     }
 
+    public async generateWeeklyLeadeboardMessage(
+        member: GuildMember,
+        type: "text" | "voice"
+    ) {
+        let message = "";
+        const documents = await this.client.cache.getAllLevelDocuments(
+            true,
+            true,
+            type
+        );
+        message += documents
+            .splice(0, 10)
+            .map(
+                (document, index) =>
+                    `${index + 1}. <@${document.userId}> **${
+                        document[this.getWeekOfTheYear()]?.[type] || 0
+                    } ${
+                        type === "text"
+                            ? `message${
+                                  (document[this.getWeekOfTheYear()]?.[type] ||
+                                      0) === 1
+                                      ? ""
+                                      : "s"
+                              } sent`
+                            : `minute${
+                                  (document[this.getWeekOfTheYear()]?.[type] ||
+                                      0) === 1
+                                      ? ""
+                                      : "s"
+                              } in voice.`
+                    }**`
+            )
+            .join("\n");
+        if (!message.includes(member.user.id)) {
+            const index = documents.indexOf(
+                documents.find(
+                    document => document.userId === member.user.id
+                ) as WithId<UserLevelDocument>
+            );
+            if (index !== -1) {
+                message += "\n━━━━━━━━━━━━━━";
+                for (let i = -1; i <= 1; i++) {
+                    message += `\n${index + i + 11}. <@${
+                        documents[index + i].userId
+                    }> **${
+                        documents[index + 1][this.getWeekOfTheYear()]?.[type] ||
+                        0
+                    } ${
+                        type === "text"
+                            ? `message${
+                                  (documents[index + 1][
+                                      this.getWeekOfTheYear()
+                                  ]?.[type] || 0) === 1
+                                      ? ""
+                                      : "s"
+                              } sent`
+                            : `minute${
+                                  (documents[index + 1][
+                                      this.getWeekOfTheYear()
+                                  ]?.[type] || 0) === 1
+                                      ? ""
+                                      : "s"
+                              } in voice.`
+                    }**`;
+                }
+            }
+        }
+        return message;
+    }
+
     /**
      * Get whether a user is a developer or not.
      * @param snowflake The user ID to check.
@@ -530,5 +600,22 @@ export default class Functions {
      */
     public isAdmin(snowflake: Snowflake) {
         return this.client.config.admins.includes(snowflake);
+    }
+
+    /**
+     * Get the
+     * @param date The dae to get the week of.
+     * @returns The number of the week and current year.
+     */
+    public getWeekOfTheYear(date?: Date) {
+        if (!date) date = new Date();
+        const januaryFirst = new Date(date.getUTCFullYear(), 0, 1);
+        const numberOfDays = Math.floor(
+            // @ts-ignore
+            Math.abs(date - januaryFirst) / (24 * 60 * 60 * 100)
+        );
+        return `${date.getUTCFullYear}_${Math.ceil(
+            (date.getUTCDay() + 1 + numberOfDays) / 7
+        )}`;
     }
 }

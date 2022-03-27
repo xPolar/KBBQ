@@ -37,7 +37,8 @@ export default class MessageCreate extends EventHandler {
                 filter: { userId: message.author.id },
                 update: {
                     $inc: {
-                        experience: (Math.floor(Math.random() * 16) + 15) * 2
+                        experience: (Math.floor(Math.random() * 16) + 15) * 2,
+                        [`${this.client.functions.getWeekOfTheYear()}.text`]: 1
                     },
                     $setOnInsert: {
                         level: 0

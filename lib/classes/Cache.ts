@@ -87,18 +87,35 @@ export default class Cache {
         );
     }
 
-    public async getAllLevelDocuments(sorted: boolean) {
+    public async getAllLevelDocuments(
+        sorted: boolean,
+        weekly?: boolean,
+        type?: "voice" | "text"
+    ) {
         return (await Promise.any([
             new Promise(resolve => {
                 this.client.mongo
                     .db("users")
                     .collection("levels")
-                    .find({}, sorted ? { sort: { experience: -1 } } : {})
+                    .find(
+                        {},
+                        sorted
+                            ? {
+                                  sort: {
+                                      [weekly
+                                          ? `${this.client.functions.getWeekOfTheYear()}.${type}`
+                                          : "experience"]: -1
+                                  }
+                              }
+                            : {}
+                    )
                     .toArray()
                     .then(fetched => {
                         if (process.env.NODE_ENV === "production")
                             this.client.redis.set(
-                                "sortedLevels",
+                                `sortedLevels${
+                                    weekly ? `.weekly.${type}` : ""
+                                }`,
                                 JSON.stringify(fetched)
                             );
                         resolve(fetched);
@@ -107,7 +124,7 @@ export default class Cache {
             process.env.NODE_ENV === "production"
                 ? new Promise((resolve, reject) => {
                       this.client.redis
-                          .get("sortedLevels")
+                          .get(`sortedLevels${weekly ? `.weekly.${type}` : ""}`)
                           .then(cached =>
                               cached
                                   ? resolve(JSON.parse(cached))

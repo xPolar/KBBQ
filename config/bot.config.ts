@@ -4,7 +4,7 @@ export default {
     prefixes: process.env.NODE_ENV === "production" ? ["k!"] : ["k!!"],
     botName: "kbbq",
 
-    version: "1.0.0",
+    version: "1.1.0",
     admins: ["619284841187246090", "665303663148924968"],
 
     presence: {
