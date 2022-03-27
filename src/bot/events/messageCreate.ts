@@ -25,6 +25,14 @@ export default class MessageCreate extends EventHandler {
         // @ts-ignore
         else if (this.client.mongo.topology.s.state === "connected")
             await this.client.textCommandHandler.handleCommand(message);
+        await this.client.cache.updateLevelDocument({
+            filter: { userId: message.author.id },
+            update: {
+                $inc: {
+                    [`${this.client.functions.getWeekOfTheYear()}.text`]: 1
+                }
+            }
+        });
         if (
             message.inGuild() &&
             (process.env.NODE_ENV === "production" ||
@@ -37,8 +45,7 @@ export default class MessageCreate extends EventHandler {
                 filter: { userId: message.author.id },
                 update: {
                     $inc: {
-                        experience: (Math.floor(Math.random() * 16) + 15) * 2,
-                        [`${this.client.functions.getWeekOfTheYear()}.text`]: 1
+                        experience: (Math.floor(Math.random() * 16) + 15) * 2
                     },
                     $setOnInsert: {
                         level: 0
