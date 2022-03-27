@@ -9,6 +9,11 @@ export default class Leaderboard extends SlashCommand {
             guildOnly: true,
             options: [
                 {
+                    name: "leveling",
+                    description: "View the leaderboard for leveling.",
+                    type: "SUB_COMMAND"
+                },
+                {
                     name: "weekly",
                     description: "Get the weekly leaderboard.",
                     type: "SUB_COMMAND_GROUP",
