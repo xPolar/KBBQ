@@ -206,7 +206,7 @@ export default class SlashCommandHandler {
 
         if (
             process.env.NODE_ENV === "development" &&
-            !this.client.functions.isDeveloper(interaction.user.id)
+            !this.client.functions.isAdmin(interaction.user.id)
         )
             return;
 
@@ -282,3 +282,4 @@ export default class SlashCommandHandler {
         );
     }
 }
+
