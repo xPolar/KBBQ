@@ -98,16 +98,12 @@ export default class MessageCreate extends EventHandler {
                     }
                 });
                 this.client.logger.info(
-                    `${message.author.tag} has gone ${level} day${
-                        level === 1 ? "" : "s"
-                    } without touching grass${
+                    `${message.author.tag} has leveled up to level ${level}${
                         rolesModified ? roleMessage : ""
                     }!`.replace("`", "")
                 );
                 await message.reply({
-                    content: `${message.author.toString()} has gone ${level} day${
-                        level === 1 ? "" : "s"
-                    } without touching grass${
+                    content: `${message.author.toString()} has leveled up to level ${level}${
                         rolesModified ? roleMessage : ""
                     }!`,
                     allowedMentions: { parse: ["users"] }
@@ -116,3 +112,4 @@ export default class MessageCreate extends EventHandler {
         }
     }
 }
+
