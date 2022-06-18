@@ -165,7 +165,7 @@ export default class VoiceLeveling {
                     content: `You've leveled up to level ${level}${
                         rolesModified ? message : ""
                     }!`,
-                    allowedMentions: { parse: ["users"] }
+                    allowedMentions: { users: [member.id] }
                 });
             }
         }

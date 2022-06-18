@@ -106,7 +106,7 @@ export default class MessageCreate extends EventHandler {
                     content: `${message.author.toString()} has leveled up to level ${level}${
                         rolesModified ? roleMessage : ""
                     }!`,
-                    allowedMentions: { parse: ["users"] }
+                    allowedMentions: { users: [message.author.id] }
                 });
             }
         }
