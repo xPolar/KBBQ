@@ -42,7 +42,7 @@ export default class Leaderboard extends SlashCommand {
                 this.client.functions.generatePrimaryMessage({
                     title: "Text Leaderboard",
                     description:
-                        await this.client.functions.generateWeeklyLeadeboardMessage(
+                        await this.client.functions.generateWeeklyLeaderboardMessage(
                             interaction.member as GuildMember,
                             "text"
                         )
@@ -53,7 +53,7 @@ export default class Leaderboard extends SlashCommand {
                 this.client.functions.generatePrimaryMessage({
                     title: "Voice Leaderboard",
                     description:
-                        await this.client.functions.generateWeeklyLeadeboardMessage(
+                        await this.client.functions.generateWeeklyLeaderboardMessage(
                             interaction.member as GuildMember,
                             "voice"
                         )
@@ -72,3 +72,4 @@ export default class Leaderboard extends SlashCommand {
         );
     }
 }
+

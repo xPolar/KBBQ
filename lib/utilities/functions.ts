@@ -1,5 +1,4 @@
 import { createHash } from "crypto";
-import * as petitio from "petitio";
 import {
     GuildMember,
     MessageActionRow,
@@ -14,7 +13,6 @@ import {
 import * as c from "canvas";
 import { WithId } from "mongodb";
 import { existsSync, mkdirSync, readdirSync } from "fs";
-import { PetitioRequest } from "petitio/dist/lib/PetitioRequest";
 import { permissionNames } from "./permissions.js";
 import BetterClient from "../extensions/BetterClient.js";
 import {
@@ -175,20 +173,19 @@ export default class Functions {
         type?: string
     ): Promise<string | null> {
         try {
-            const haste = await (
-                (await petitio
-                    // @ts-ignore
-                    .default(
-                        `${this.client.config.hastebin}/documents`,
-                        "POST"
-                    )) as PetitioRequest
-            )
-                .body(content)
-                .header(
-                    "User-Agent",
-                    `${this.client.config.botName}/${this.client.config.version}`
-                )
-                .json();
+            const response = await fetch(
+                `${this.client.config.hastebin}/documents`,
+                {
+                    method: "POST",
+                    body: content,
+                    headers: {
+                        "User-Agent": `${this.client.config.botName}/${this.client.config.version}`
+                    }
+                }
+            );
+
+            const haste = await response.json();
+
             return `${this.client.config.hastebin}/${haste.key}${
                 type ? `.${type}` : ".md"
             }`;
@@ -506,7 +503,7 @@ export default class Functions {
         return message;
     }
 
-    public async generateWeeklyLeadeboardMessage(
+    public async generateWeeklyLeaderboardMessage(
         member: GuildMember,
         type: "text" | "voice"
     ) {
@@ -602,3 +599,4 @@ export default class Functions {
         )}`;
     }
 }
+

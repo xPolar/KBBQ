@@ -23,7 +23,6 @@ specifiers:
   eslint-plugin-import: ^2.25.3
   eslint-plugin-prettier: ^4.0.0
   mongodb: ^4.2.0
-  petitio: ^1.4.0
   prettier: ^2.5.1
   redis: ^4.0.3
   typescript: ^4.5.2
@@ -38,7 +37,6 @@ dependencies:
   discord.js: github.com/FireDiscordBot/discord.js/1fdd6fbe2898a354709bd93d4cbe522a70888d9e
   dotenv-extended: 2.9.0
   mongodb: 4.7.0
-  petitio: 1.4.0
   redis: 4.1.0
 
 devDependencies:
@@ -63,6 +61,7 @@ packages:
   /@discordjs/builders/0.8.2:
     resolution: {integrity: sha512-/YRd11SrcluqXkKppq/FAVzLIPRVlIVmc6X8ZklspzMIHDtJ+A4W37D43SHvLdH//+NnK+SHW/WeOF4Ts54PeQ==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
+    deprecated: no longer supported
     dependencies:
       '@sindresorhus/is': 4.6.0
       discord-api-types: 0.24.0
@@ -74,11 +73,13 @@ packages:
   /@discordjs/collection/0.3.2:
     resolution: {integrity: sha512-dMjLl60b2DMqObbH1MQZKePgWhsNe49XkKBZ0W5Acl5uVV43SN414i2QfZwRI7dXAqIn8pEWD2+XXQFn9KWxqg==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
+    deprecated: no longer supported
     dev: false
 
   /@discordjs/form-data/3.0.1:
     resolution: {integrity: sha512-ZfFsbgEXW71Rw/6EtBdrP5VxBJy4dthyC0tpQKGKmYFImlmmrykO14Za+BiIVduwjte0jXEBlhSKf0MWbFp9Eg==}
     engines: {node: '>= 6'}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
@@ -1891,11 +1892,6 @@ packages:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
     engines: {node: '>=8'}
     dev: true
-
-  /petitio/1.4.0:
-    resolution: {integrity: sha512-9LaVd/5BLmbNU8Q4Ax8NezihiPt2ISNqi2vKilEchSSf+YSOXxfsLUb0SUmDskm1WkBOVTsqdyuyYI0RYKqr0Q==}
-    engines: {node: '>=12.3.0'}
-    dev: false
 
   /picomatch/2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}

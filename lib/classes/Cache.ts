@@ -114,7 +114,7 @@ export default class Cache {
                         if (process.env.NODE_ENV === "production")
                             this.client.redis.set(
                                 `sortedLevels${
-                                    weekly ? `.weekly.${type}` : ""
+                                    weekly ? `weekly.${type}` : type
                                 }`,
                                 JSON.stringify(fetched)
                             );
@@ -124,7 +124,9 @@ export default class Cache {
             process.env.NODE_ENV === "production"
                 ? new Promise((resolve, reject) => {
                       this.client.redis
-                          .get(`sortedLevels${weekly ? `.weekly.${type}` : ""}`)
+                          .get(
+                              `sortedLevels.${weekly ? `weekly.${type}` : type}`
+                          )
                           .then(cached =>
                               cached
                                   ? resolve(JSON.parse(cached))
@@ -137,3 +139,4 @@ export default class Cache {
         ])) as Promise<UserLevelDocument[]>;
     }
 }
+
