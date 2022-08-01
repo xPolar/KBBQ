@@ -17,7 +17,7 @@ export default {
         ]
     } as PresenceData,
 
-    hastebin: "https://h.inv.wtf",
+    hastebin: "https://haste.polars.cloud",
 
     colors: {
         primary: "ffffff",
@@ -57,3 +57,4 @@ export default {
         }
     }
 };
+
