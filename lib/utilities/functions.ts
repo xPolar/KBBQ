@@ -475,7 +475,11 @@ export default class Functions {
 		const roleIdsRemoved = rolesRemoved.map((role) => role.id);
 
 		await this.client.api.guilds.editMember(userLevel.guildId, userLevel.userId, {
-			roles: member.roles.filter((role) => !roleIdsRemoved.includes(role)).concat(rolesAdded.map((role) => role.id)),
+			roles: [
+				...new Set(
+					member.roles.filter((role) => !roleIdsRemoved.includes(role)).concat(rolesAdded.map((role) => role.id)),
+				),
+			],
 		});
 
 		return [rolesAdded, rolesRemoved] as const;
