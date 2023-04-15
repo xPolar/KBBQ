@@ -33,13 +33,6 @@ model UserLanguage {
     @@map("user_languages")
 }
 
-model ActionLog {
-    guildId   String @id
-    channelId String
-
-    @@map("action_logs")
-}
-
 model UserLevel {
     userId     String
     guildId    String

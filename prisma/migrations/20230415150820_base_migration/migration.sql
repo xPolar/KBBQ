@@ -20,14 +20,6 @@ CREATE TABLE "user_languages" (
 );
 
 -- CreateTable
-CREATE TABLE "action_logs" (
-    "guildId" TEXT NOT NULL,
-    "channelId" TEXT NOT NULL,
-
-    CONSTRAINT "action_logs_pkey" PRIMARY KEY ("guildId")
-);
-
--- CreateTable
 CREATE TABLE "user_levels" (
     "userId" TEXT NOT NULL,
     "guildId" TEXT NOT NULL,
