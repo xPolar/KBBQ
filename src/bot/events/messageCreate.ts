@@ -84,7 +84,7 @@ export default class MessageCreate extends EventHandler {
 				this.client.logger.info(
 					`${message.author.username}#${message.author.discriminator} has leveled ${
 						updatedUserLevel.level > calculatedLevel ? "down" : "up"
-					} to level ${calculatedLevel} from ${updatedUserLevel.level} (${updatedUserLevel.experience} experience) ${
+					} to level ${calculatedLevel} from ${updatedUserLevel.level} (${updatedUserLevel.experience} experience)${
 						rolesModified ? levelUpMessage : ""
 					}!`,
 				);
