@@ -6,7 +6,7 @@ export default {
 	/**
 	 * The prefix the bot will use for text commands, the prefix is different depending on the NODE_ENV.
 	 */
-	prefixes: process.env.NODE_ENV === "production" ? ["b!"] : ["b!!"],
+	prefixes: process.env.NODE_ENV === "production" ? ["k!"] : ["bk!"],
 	/**
 	 * The name the bot should use across the bot.
 	 */
@@ -24,30 +24,14 @@ export default {
 	testGuildId: "925264080250494977",
 
 	/**
-	 * A link to our bot's Discord support server.
-	 */
-	supportServer: "https://discord.gg/VvE5ucuJmW",
-	/**
-	 * An object of type Record<number, string>, which relates to the number of an instance of the bot, and the invite, all invites uses the most minimal permissions as possible.
-	 */
-	minimalInvite: {
-		1: "https://discord.com/api/oauth2/authorize?client_id=769772015447703592&permissions=52228&redirect_uri=https%3A%2F%2Fdiscord.gg%2FhkDuZfpfBB&scope=bot%20applications.commands",
-		2: "https://canary.discord.com/api/oauth2/authorize?client_id=990765511950348298&permissions=52228&scope=applications.commands+bot",
-	},
-	/**
-	 * A link to the GitHub repository for the bot.
-	 */
-	gitHub: "https://github.com/OtterDevelopment/BeemoHelper",
-
-	/**
 	 * The presence that should be displayed when the bot starts running.
 	 */
 	presence: {
 		status: "online",
 		activities: [
 			{
-				type: ActivityType.Playing,
-				name: "with /help",
+				type: ActivityType.Watching,
+				name: "your levels.",
 			},
 		],
 	} as GatewayPresenceUpdateData,

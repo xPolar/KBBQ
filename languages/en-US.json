@@ -92,7 +92,7 @@
 	"AN_ERROR_HAS_OCCURRED_DESCRIPTION": "An error has occurred, please try again later. This has already been reported to my developers.",
 
 	"PING_COMMAND_NAME": "ping",
-	"PING_COMMAND_DESCRIPTION": "Pong! Get the current ping / latency of Beemo Helper.",
+	"PING_COMMAND_DESCRIPTION": "Pong! Get the current ping / latency of KBBQ bot.",
 	"PING": "Ping?",
 	"PONG": "Pong! (Host latency of {{hostLatency}}ms)",
 
