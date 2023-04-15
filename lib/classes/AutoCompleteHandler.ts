@@ -1,112 +1,169 @@
-import { AutocompleteInteraction } from "discord.js";
-import BetterClient from "../extensions/BetterClient.js";
-import AutoComplete from "./AutoComplete.js";
+import type {
+	APIApplicationCommandAutocompleteInteraction,
+	APIInteractionDataResolved,
+	WithIntrinsicProps,
+} from "@discordjs/core";
+import { ApplicationCommandOptionType, ApplicationCommandType } from "@discordjs/core";
+import type { APIInteractionWithArguments, InteractionArguments } from "../../typings";
+import type ExtendedClient from "../extensions/ExtendedClient";
+import applicationCommandOptionTypeReference from "../utilities/reference.js";
+import type AutoComplete from "./AutoComplete";
+import type Language from "./Language";
 
 export default class AutoCompleteHandler {
-    /**
-     * Our client.
-     */
-    private readonly client: BetterClient;
+	/**
+	 * Our extended client.
+	 */
+	public readonly client: ExtendedClient;
 
-    /**
-     * Create our AutoCompleteHandler.
-     * @param client Our client.
-     */
-    constructor(client: BetterClient) {
-        this.client = client;
-    }
+	/**
+	 * Create our auto complete handler.
+	 *
+	 * @param client Our extended client.
+	 */
+	public constructor(client: ExtendedClient) {
+		this.client = client;
+	}
 
-    /**
-     * Load all the autoCompletes in the autoCompletes directory.
-     */
-    public loadAutoCompletes() {
-        this.client.functions
-            .getFiles(
-                `${this.client.__dirname}/dist/src/bot/autoCompletes`,
-                "",
-                true
-            )
-            .forEach(parentFolder =>
-                this.client.functions
-                    .getFiles(
-                        `${this.client.__dirname}/dist/src/bot/autoCompletes/${parentFolder}`,
-                        ".js"
-                    )
-                    .forEach(async fileName => {
-                        const autoCompleteFile = await import(
-                            `../../src/bot/autoCompletes/${parentFolder}/${fileName}`
-                        );
-                        const autoComplete: AutoComplete =
-                            // eslint-disable-next-line new-cap
-                            new autoCompleteFile.default(this.client);
-                        return this.client.autoCompletes.set(
-                            autoComplete.name,
-                            autoComplete
-                        );
-                    })
-            );
-    }
+	/**
+	 * Load all of the auto completes in the autoCompletes directory.
+	 */
+	public async loadAutoCompletes() {
+		for (const parentFolder of this.client.functions.getFiles(
+			`${this.client.__dirname}/dist/src/bot/autoCompletes`,
+			"",
+			true,
+		))
+			for (const fileName of this.client.functions.getFiles(
+				`${this.client.__dirname}/dist/src/bot/autoCompletes/${parentFolder}`,
+				".js",
+			)) {
+				const AutoCompleteFile = await import(`../../src/bot/autoCompletes/${parentFolder}/${fileName}`);
 
-    /**
-     * Reload all the autoCompletes in the autoCompletes directory.
-     */
-    public reloadAutoCompletes() {
-        this.client.autoCompletes.clear();
-        this.loadAutoCompletes();
-    }
+				const autoComplete = new AutoCompleteFile.default(this.client) as AutoComplete;
 
-    /**
-     * Fetch the autoComplete with the provided name.
-     * @param name The name to search for.
-     * @returns The autoComplete we've found.
-     */
-    private fetchAutoComplete(name: string): AutoComplete | undefined {
-        return this.client.autoCompletes.find(
-            autoComplete => autoComplete.name === name
-        );
-    }
+				this.client.autoCompletes.set(autoComplete.accepts, autoComplete);
+			}
+	}
 
-    /**
-     * Handle the interaction created for this autoComplete to make sure the user and client can execute it.
-     * @param interaction The interaction created.
-     */
-    public async handleAutoComplete(interaction: AutocompleteInteraction) {
-        const name = [
-            interaction.commandName,
-            interaction.options.getSubcommandGroup(false) || "",
-            interaction.options.getSubcommand(false) || "",
-            interaction.options.getFocused(true).name || ""
-        ].join("-");
-        const autoComplete = this.fetchAutoComplete(name);
-        if (!autoComplete) return;
+	/**
+	 * Reload all of the auto completes.
+	 */
+	public async reloadAutoCompletes() {
+		this.client.autoCompletes.clear();
+		await this.loadAutoCompletes();
+	}
 
-        return this.runAutoComplete(autoComplete, interaction);
-    }
+	/**
+	 * Get an auto complete by its name.
+	 *
+	 * @param name The name of the auto complete.
+	 * @returns The auto complete with the specified name within the accepts field, otherwise undefined.
+	 */
+	private getAutoComplete(name: string) {
+		return [...this.client.autoCompletes.values()].find((autoComplete) => autoComplete.accepts.includes(name));
+	}
 
-    /**
-     * Execute our autoComplete.
-     * @param autoComplete The autoComplete we want to execute.
-     * @param interaction The interaction for our autoComplete.
-     */
-    private async runAutoComplete(
-        autoComplete: AutoComplete,
-        interaction: AutocompleteInteraction
-    ) {
-        autoComplete
-            .run(interaction)
-            .then(() =>
-                this.client.dataDog.increment("autocompleteUsage", 1, [
-                    `completion:${autoComplete.name}`
-                ])
-            )
-            .catch(async (error): Promise<any> => {
-                this.client.logger.error(error);
-                await this.client.logger.sentry.captureWithInteraction(
-                    error,
-                    interaction
-                );
+	/**
+	 * Handle an interaction properly to ensure that it can invoke an auto complete.
+	 *
+	 * @param options The options to handle the auto complete.
+	 * @param options.data The interaction that is attempting to invoke an auto complete.
+	 * @param options.shardId The shard ID to use when replying to the interaction.
+	 */
+	public async handleAutoComplete({
+		data: interaction,
+		shardId,
+	}: Omit<WithIntrinsicProps<APIApplicationCommandAutocompleteInteraction>, "api">) {
+		const name = [];
 
-                if (!interaction.responded) return interaction.respond([]);
-            });
-    }
+		const applicationCommandArguments = {
+			attachments: {},
+			booleans: {},
+			channels: {},
+			integers: {},
+			mentionables: {},
+			numbers: {},
+			roles: {},
+			strings: {},
+			users: {},
+		} as InteractionArguments;
+
+		if (interaction.data.type === ApplicationCommandType.ChatInput) {
+			let parentOptions = interaction.data.options ?? [];
+
+			while (parentOptions.length) {
+				const currentOption = parentOptions.pop();
+
+				if (!currentOption) continue;
+
+				if (currentOption.type === ApplicationCommandOptionType.SubcommandGroup) {
+					name.push(currentOption.name);
+					applicationCommandArguments.subCommandGroup = currentOption;
+					parentOptions = currentOption.options;
+				} else if (currentOption.type === ApplicationCommandOptionType.Subcommand) {
+					name.push(currentOption.name);
+					applicationCommandArguments.subCommand = currentOption;
+					parentOptions = currentOption.options ?? [];
+				} else {
+					const identifier = applicationCommandOptionTypeReference[currentOption.type] as keyof Omit<
+						InteractionArguments,
+						"subCommand" | "subCommandGroup"
+					>;
+
+					if (
+						interaction.data.resolved &&
+						identifier in interaction.data.resolved &&
+						currentOption.name in interaction.data.resolved[identifier as keyof APIInteractionDataResolved]!
+					) {
+						applicationCommandArguments[identifier]![currentOption.name] = interaction.data.resolved[
+							identifier as keyof APIInteractionDataResolved
+						]![currentOption.name] as any;
+						continue;
+					}
+
+					applicationCommandArguments[identifier]![currentOption.name] = currentOption as any;
+
+					if ((applicationCommandArguments[identifier]![currentOption.name] as any).focused)
+						name.push(currentOption.name);
+				}
+			}
+		}
+
+		const interactionWithArguments = { ...interaction, arguments: applicationCommandArguments };
+
+		const autoComplete = this.getAutoComplete(name.filter(Boolean).join("-"));
+		if (!autoComplete) return;
+
+		const userLanguage = await this.client.prisma.userLanguage.findUnique({
+			where: { userId: (interaction.member?.user ?? interaction.user!).id },
+		});
+		const language = this.client.languageHandler.getLanguage(userLanguage?.languageId ?? interaction.locale);
+
+		return this.runAutoComplete(autoComplete, interactionWithArguments, language, shardId);
+	}
+
+	/**
+	 * Run an auto complete.
+	 *
+	 * @param autoComplete The auto complete we want to run.
+	 * @param interaction The interaction that invoked the auto complete.
+	 * @param language The language to use when replying to the interaction.
+	 */
+	private async runAutoComplete(
+		autoComplete: AutoComplete,
+		interaction: APIInteractionWithArguments<APIApplicationCommandAutocompleteInteraction>,
+		language: Language,
+		shardId: number,
+	) {
+		await autoComplete.run({ interaction, language, shardId }).catch(async (error) => {
+			this.client.logger.error(error);
+
+			await this.client.logger.sentry.captureWithInteraction(error, interaction);
+
+			return this.client.api.interactions.createAutocompleteResponse(interaction.id, interaction.token, {
+				choices: [],
+			});
+		});
+	}
 }

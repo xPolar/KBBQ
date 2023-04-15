@@ -1,31 +1,41 @@
-import { AutocompleteInteraction } from "discord.js";
-import BetterClient from "../extensions/BetterClient";
+import type { APIApplicationCommandAutocompleteInteraction } from "@discordjs/core";
+import type { APIInteractionWithArguments } from "../../typings";
+import type ExtendedClient from "../extensions/ExtendedClient";
+import type Language from "./Language";
 
 export default class AutoComplete {
-    /**
-     * The name of our autoComplete.
-     */
-    public readonly name: string;
+	/**
+	 * A list of strings that this autocomplete should listen to.
+	 */
+	public readonly accepts: string[];
 
-    /**
-     * Our client.
-     */
-    public readonly client: BetterClient;
+	/**
+	 * Our extended client.
+	 */
+	public readonly client: ExtendedClient;
 
-    /**
-     * Create our autoComplete.
-     * @param name The name of our autoComplete.
-     * @param client Our client.
-     */
-    constructor(name: string, client: BetterClient) {
-        this.name = name;
+	/**
+	 * Create a new application command.
+	 *
+	 * @param accepts A list of strings that this autocomplete should listen to.
+	 * @param client Our extended client.
+	 */
+	public constructor(accepts: string[], client: ExtendedClient) {
+		this.accepts = accepts;
+		this.client = client;
+	}
 
-        this.client = client;
-    }
-
-    /**
-     * Run the autocomplete.
-     * @param _interaction The interaction that was created.
-     */
-    public async run(_interaction: AutocompleteInteraction): Promise<void> {}
+	/**
+	 * Run this auto complete.
+	 *
+	 * @param _options The options to run this application command.
+	 * @param _options.interaction The interaction to pre-check.
+	 * @param _options.language The language to use when replying to the interaction.
+	 * @param _options.shardId The shard ID to use when replying to the interaction.
+	 */
+	public async run(_options: {
+		interaction: APIInteractionWithArguments<APIApplicationCommandAutocompleteInteraction>;
+		language: Language;
+		shardId: number;
+	}): Promise<any> {}
 }

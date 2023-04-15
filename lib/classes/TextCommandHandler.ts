@@ -1,177 +1,229 @@
-import { Snowflake } from "discord.js";
-import TextCommand from "./TextCommand.js";
-import BetterClient from "../extensions/BetterClient.js";
-import BetterMessage from "../extensions/BetterMessage.js";
+import { setTimeout } from "node:timers";
+import type { GatewayMessageCreateDispatchData, WithIntrinsicProps } from "@discordjs/core";
+import type ExtendedClient from "../extensions/ExtendedClient.js";
+import type Language from "./Language.js";
+import type TextCommand from "./TextCommand";
 
 export default class TextCommandHandler {
-    /**
-     * Our client.
-     */
-    private readonly client: BetterClient;
+	/**
+	 * Our extended client.
+	 */
+	public readonly client: ExtendedClient;
 
-    /**
-     * How long a user must wait between each text command.
-     */
-    private readonly coolDownTime: number;
+	/**
+	 * How long a user must wait before being able to run a text command again.
+	 */
+	public readonly coolDownTime: number;
 
-    /**
-     * Our user's cooldowns.
-     */
-    private coolDowns: Set<Snowflake>;
+	/**
+	 * A list of user IDs that currently have a cooldown applied.
+	 */
+	public readonly cooldowns: Set<string>;
 
-    /**
-     * Create our TextCommandHandler.
-     * @param client
-     */
-    constructor(client: BetterClient) {
-        this.client = client;
+	/**
+	 * Create our text command handler.
+	 *
+	 * @param client Our extended client.
+	 */
+	public constructor(client: ExtendedClient) {
+		this.client = client;
 
-        this.coolDownTime = 1000;
-        this.coolDowns = new Set();
-    }
+		this.coolDownTime = 200;
+		this.cooldowns = new Set();
+	}
 
-    /**
-     * Load all of the text commands in the textCommands directory.
-     */
-    public loadTextCommands() {
-        this.client.functions
-            .getFiles(
-                `${this.client.__dirname}/dist/src/bot/textCommands`,
-                "",
-                true
-            )
-            .forEach(parentFolder =>
-                this.client.functions
-                    .getFiles(
-                        `${this.client.__dirname}/dist/src/bot/textCommands/${parentFolder}`,
-                        ".js"
-                    )
-                    .forEach(async fileName => {
-                        try {
-                            const commandFile = await import(
-                                `../../src/bot/textCommands/${parentFolder}/${fileName}`
-                            );
-                            // eslint-disable-next-line new-cap
-                            const command: TextCommand =
-                                // eslint-disable-next-line new-cap
-                                new commandFile.default(this.client);
-                            return this.client.textCommands.set(
-                                command.name,
-                                command
-                            );
-                        } catch (error) {
-                            this.client.logger.error(
-                                `Error loading text command ${fileName}: ${error}`
-                            );
-                        }
-                        return null;
-                    })
-            );
-    }
+	/**
+	 * Load all of the text commands in the textCommands directory.
+	 */
+	public async loadTextCommands() {
+		for (const parentFolder of this.client.functions.getFiles(
+			`${this.client.__dirname}/dist/src/bot/textCommands`,
+			"",
+			true,
+		)) {
+			for (const fileName of this.client.functions.getFiles(
+				`${this.client.__dirname}/dist/src/bot/textCommands/${parentFolder}`,
+				".js",
+			)) {
+				const CommandFile = await import(`../../src/bot/textCommands/${parentFolder}/${fileName}`);
 
-    /**
-     * Reload all the text commands in the textCommands directory.
-     */
-    public reloadTextCommands() {
-        this.client.textCommands.clear();
-        this.loadTextCommands();
-    }
+				const command = new CommandFile.default(this.client) as TextCommand;
 
-    /**
-     * Fetch the text command that has the provided name.
-     * @param name The name to search for.
-     * @private The text command we've found.
-     */
-    private fetchCommand(name: string): TextCommand | undefined {
-        return this.client.textCommands.get(name);
-    }
+				this.client.textCommands.set(command.name, command);
+			}
+		}
+	}
 
-    /**
-     * Handle the message created for this text command to make sure the user and client can execute it.
-     * @param message The message created.
-     */
-    public async handleCommand(message: BetterMessage) {
-        const prefix = this.client.config.prefixes.find(p =>
-            message.content.startsWith(p)
-        );
-        if (!prefix) return;
-        const args = message.content.slice(prefix.length).trim().split(/ +/g);
-        const commandName = args.shift()?.toLowerCase();
-        const command = this.fetchCommand(commandName || "");
-        if (
-            !command ||
-            (process.env.NODE_ENV === "development" &&
-                !this.client.functions.isAdmin(message.author.id))
-        )
-            return;
+	/**
+	 * Reload all of the text commands.
+	 */
+	public async reloadTextCommands() {
+		this.client.textCommands.clear();
+		await this.loadTextCommands();
+	}
 
-        const missingPermissions = await command.validate(message);
-        if (missingPermissions)
-            return message.reply(
-                this.client.functions.generateErrorMessage(missingPermissions)
-            );
+	/**
+	 * Get a text command by its name.
+	 *
+	 * @param name The name of the text command.
+	 * @returns The text command with the specified name if it exists, otherwise undefined.
+	 */
+	private getTextCommand(name: string) {
+		return this.client.textCommands.get(name);
+	}
 
-        const preChecked = await command.preCheck(message);
-        if (!preChecked[0]) {
-            if (preChecked[1])
-                await message.reply(
-                    this.client.functions.generateErrorMessage(preChecked[1])
-                );
-            return;
-        }
+	/**
+	 * Handle a message properly to ensure that it can invoke a text command.
+	 *
+	 * @param options The interaction that is attempting to invoke a text command.
+	 * @param options.data The message data.
+	 * @param options.shardId The shard ID that the message was received on.
+	 */
+	public async handleTextCommand({
+		data: message,
+		shardId,
+	}: Omit<WithIntrinsicProps<GatewayMessageCreateDispatchData>, "api">) {
+		const validPrefix = this.client.config.prefixes.find((prefix) => message.content.startsWith(prefix));
+		if (!validPrefix) return;
 
-        return this.runCommand(command, message, args);
-    }
+		const userLanguage = await this.client.prisma.userLanguage.findUnique({
+			where: {
+				userId: message.author.id,
+			},
+		});
+		const language = this.client.languageHandler.getLanguage(userLanguage?.languageId);
 
-    /**
-     * Execute our text command.
-     * @param command The text command we want to execute.
-     * @param message The message that was created for our text command.
-     * @param args The arguments for our text command.
-     */
-    // @ts-ignore
-    private async runCommand(
-        command: TextCommand,
-        message: BetterMessage,
-        args: string[]
-    ) {
-        if (this.coolDowns.has(message.author.id))
-            return message.reply(
-                this.client.functions.generateErrorMessage({
-                    title: "Command Cooldown",
-                    description:
-                        "Please wait a second before running this command again!"
-                })
-            );
+		const textCommandArguments = message.content.slice(validPrefix.length).trim().split(/ +/g);
+		const textCommandName = textCommandArguments.shift()?.toLowerCase();
 
-        this.client.usersUsingBot.add(message.author.id);
-        command
-            .run(message, args)
-            .then(() => {
-                this.client.usersUsingBot.delete(message.author.id);
-                this.client.dataDog.increment("textCommandUsage", 1, [
-                    `command:${command.name}`
-                ]);
-            })
-            .catch(async (error): Promise<any> => {
-                this.client.logger.error(error);
-                const sentryId =
-                    await this.client.logger.sentry.captureWithMessage(
-                        error,
-                        message
-                    );
-                return message.reply(
-                    this.client.functions.generateErrorMessage({
-                        title: "An Error Has Occurred",
-                        description: `An unexpected error was encountered while running \`${command.name}\`, my developers have already been notified! Feel free to join my support server in the mean time!`,
-                        footer: { text: `Sentry Event ID: ${sentryId} ` }
-                    })
-                );
-            });
-        this.coolDowns.add(message.author.id);
-        setTimeout(
-            () => this.coolDowns.delete(message.author.id),
-            this.coolDownTime
-        );
-    }
+		const textCommand = this.getTextCommand(textCommandName ?? "");
+		if (!textCommand) return;
+
+		const missingPermissions = await textCommand.validate({ language, message, shardId, args: textCommandArguments });
+		if (missingPermissions)
+			return this.client.api.channels.createMessage(message.channel_id, {
+				embeds: [
+					{
+						...missingPermissions,
+						color: this.client.config.colors.error,
+					},
+				],
+				message_reference: {
+					message_id: message.id,
+					fail_if_not_exists: false,
+				},
+				allowed_mentions: { parse: [], replied_user: true },
+			});
+
+		const [preChecked, preCheckedResponse] = await textCommand.preCheck({
+			message,
+			language,
+			shardId,
+			args: textCommandArguments,
+		});
+		if (!preChecked) {
+			if (preCheckedResponse) {
+				return this.client.api.channels.createMessage(message.channel_id, {
+					embeds: [
+						{
+							...preCheckedResponse,
+							color: this.client.config.colors.error,
+						},
+					],
+					message_reference: {
+						message_id: message.id,
+						fail_if_not_exists: false,
+					},
+					allowed_mentions: { parse: [], replied_user: true },
+				});
+			}
+
+			return;
+		}
+
+		return this.runTextCommand(textCommand, message, shardId, language, textCommandArguments);
+	}
+
+	/**
+	 * Run a text command.
+	 *
+	 * @param textCommand The text command we want to run.
+	 * @param message The message that invoked the text command.
+	 * @param shardId The shard ID that the message was received on.
+	 * @param language The language to use when replying to the interaction.
+	 * @param args The arguments to pass to the text command.
+	 * @returns The result of the text command.
+	 */
+	private async runTextCommand(
+		textCommand: TextCommand,
+		message: GatewayMessageCreateDispatchData,
+		shardId: number,
+		language: Language,
+		args: string[],
+	) {
+		if (this.cooldowns.has(message.author.id))
+			return this.client.api.channels.createMessage(message.channel_id, {
+				embeds: [
+					{
+						title: language.get("COOLDOWN_ON_TYPE_TITLE", {
+							type: "Command",
+						}),
+						description: language.get("COOLDOWN_ON_TYPE_DESCRIPTION", { type: "command" }),
+						color: this.client.config.colors.error,
+					},
+				],
+				message_reference: {
+					message_id: message.id,
+					fail_if_not_exists: false,
+				},
+				allowed_mentions: { parse: [], replied_user: true },
+			});
+
+		try {
+			await textCommand.run({
+				args,
+				language,
+				message,
+				shardId,
+			});
+
+			if (textCommand.cooldown) await textCommand.applyCooldown(message.author.id);
+
+			this.client.submitMetric("commands_used", "inc", 1, {
+				command: textCommand.name,
+				type: "text",
+				success: "true",
+				shard: shardId.toString(),
+			});
+		} catch (error) {
+			this.client.submitMetric("commands_used", "inc", 1, {
+				command: textCommand.name,
+				type: "text",
+				success: "false",
+				shard: shardId.toString(),
+			});
+			this.client.logger.error(error);
+
+			const eventId = await this.client.logger.sentry.captureWithMessage(error, message);
+
+			return this.client.api.channels.createMessage(message.channel_id, {
+				embeds: [
+					{
+						title: language.get("AN_ERROR_HAS_OCCURRED_TITLE"),
+						description: language.get("AN_ERROR_HAS_OCCURRED_DESCRIPTION"),
+						footer: {
+							text: language.get("SENTRY_EVENT_ID_FOOTER", {
+								eventId,
+							}),
+						},
+						color: this.client.config.colors.error,
+					},
+				],
+				allowed_mentions: { parse: [], replied_user: true },
+			});
+		}
+
+		this.cooldowns.add(message.author.id);
+		return setTimeout(() => this.cooldowns.delete(message.author.id), this.coolDownTime);
+	}
 }

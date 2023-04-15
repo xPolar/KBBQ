@@ -1,115 +1,105 @@
-import { ClientEvents, Snowflake } from "discord.js";
+import type { GatewayMessageCreateDispatchData, WithIntrinsicProps } from "@discordjs/core";
+import { GatewayDispatchEvents } from "@discordjs/core";
 import EventHandler from "../../../lib/classes/EventHandler.js";
-import BetterMessage from "../../../lib/extensions/BetterMessage.js";
-import BetterClient from "../../../lib/extensions/BetterClient.js";
+import type ExtendedClient from "../../../lib/extensions/ExtendedClient.js";
 
 export default class MessageCreate extends EventHandler {
-    private readonly expCooldown: Record<Snowflake, number>;
+	/**
+	 * A map of user IDs and the time they last received experience.
+	 */
+	private readonly experienceCooldown: Map<string, number>;
 
-    private readonly levelRoleKeys: Record<Snowflake, number>;
+	public constructor(client: ExtendedClient) {
+		super(client, GatewayDispatchEvents.MessageCreate);
 
-    constructor(client: BetterClient, name: keyof ClientEvents) {
-        super(client, name);
+		this.experienceCooldown = new Map();
+	}
 
-        this.expCooldown = {};
-        this.levelRoleKeys = {};
-        Object.entries(this.client.config.otherConfig.levelRoles).forEach(
-            ([key, value]) => (this.levelRoleKeys[value] = parseInt(key, 10))
-        );
-    }
+	/**
+	 * Handle the creation of a new interaction.
+	 *
+	 * https://discord.com/developers/docs/topics/gateway-events#interaction-create
+	 */
+	public override async run({ shardId, data: message }: WithIntrinsicProps<GatewayMessageCreateDispatchData>) {
+		if (message.author.bot) return;
 
-    override async run(message: BetterMessage) {
-        this.client.dataDog.increment("events", 1, ["event:messageCreate"]);
-        this.client.dataDog.increment("messagesSeen");
-        if (message.author.bot) return;
-        // @ts-ignore
-        else if (this.client.mongo.topology.s.state === "connected")
-            await this.client.textCommandHandler.handleCommand(message);
-        await this.client.cache.updateLevelDocument({
-            filter: { userId: message.author.id },
-            update: {
-                $inc: {
-                    [`${this.client.functions.getWeekOfTheYear()}.text`]: 1
-                }
-            }
-        });
-        if (
-            message.inGuild() &&
-            (process.env.NODE_ENV === "production" ||
-                (process.env.NODE_ENV === "development" &&
-                    this.client.config.admins.includes(message.author.id))) &&
-            Date.now() > (this.expCooldown[message.author.id] || 0)
-        ) {
-            this.expCooldown[message.author.id] = Date.now() + 60000;
-            const leveling = await this.client.cache.updateLevelDocument({
-                filter: { userId: message.author.id },
-                update: {
-                    $inc: {
-                        experience: (Math.floor(Math.random() * 16) + 15) * 2
-                    },
-                    $setOnInsert: {
-                        level: 0
-                    }
-                },
-                upsert: true
-            });
-            if (
-                leveling &&
-                leveling.level !==
-                    this.client.functions.calculateLevelFromExperience(
-                        leveling.experience
-                    )
-            ) {
-                const [rolesAdded, rolesRemoved] =
-                    await this.client.functions.distributeLevelRoles(
-                        message.member!,
-                        leveling
-                    );
-                const rolesModified = rolesAdded.length || rolesRemoved.length;
-                let roleMessage = "";
-                if (rolesModified) {
-                    if (!(rolesAdded.length && rolesRemoved.length))
-                        roleMessage += " and";
-                    if (rolesAdded.length)
-                        roleMessage += ` earned the ${rolesAdded
-                            .map(role => role.toString())
-                            .join(", ")} role${
-                            rolesAdded.length > 1 ? "s" : ""
-                        }`;
-                    if (rolesAdded.length && rolesRemoved.length)
-                        roleMessage += " and";
-                    if (rolesRemoved.length)
-                        roleMessage += ` lost the ${rolesRemoved
-                            .map(role => role.toString())
-                            .join(", ")} role${
-                            rolesRemoved.length > 1 ? "s" : ""
-                        }`;
-                }
-                const level =
-                    this.client.functions.calculateLevelFromExperience(
-                        leveling.experience
-                    );
-                await this.client.cache.updateLevelDocument({
-                    filter: { userId: message.author.id },
-                    update: {
-                        $set: {
-                            level
-                        }
-                    }
-                });
-                this.client.logger.info(
-                    `${message.author.tag} has leveled up to level ${level}${
-                        rolesModified ? roleMessage : ""
-                    }!`.replace("`", "")
-                );
-                await message.reply({
-                    content: `${message.author.toString()} has leveled up to level ${level}${
-                        rolesModified ? roleMessage : ""
-                    }!`,
-                    allowedMentions: { users: [message.author.id] }
-                });
-            }
-        }
-    }
+		if (message.guild_id) {
+			const currentWeek = this.client.functions.getWeekOfYear();
+			const userActivity = await this.client.prisma.weeklyActivity.findUnique({
+				where: { userId_guildId: { guildId: message.guild_id!, userId: message.author.id } },
+			});
+
+			await this.client.prisma.weeklyActivity.upsert({
+				where: { userId_guildId: { guildId: message.guild_id!, userId: message.author.id } },
+				create: {
+					messages: 1,
+					currentWeek,
+					guildId: message.guild_id!,
+					userId: message.author.id,
+					minutesInVoice: 0,
+				},
+				update:
+					currentWeek === userActivity?.currentWeek ? { messages: { increment: 1 } } : { messages: 1, currentWeek },
+			});
+
+			if (Date.now() < (this.experienceCooldown.get(message.author.id) || 0)) return;
+
+			this.experienceCooldown.set(message.author.id, Date.now() + 1_000 * 60);
+
+			const updatedUserLevel = await this.client.prisma.userLevel.upsert({
+				where: { userId_guildId: { guildId: message.guild_id!, userId: message.author.id } },
+				create: { userId: message.author.id, level: 1, experience: 0, guildId: message.guild_id! },
+				update: { experience: { increment: (Math.floor(Math.random() * 16) + 15) * 1 } }, // Change the 1 at the end to change the multiplier.
+			});
+
+			const calculatedLevel = this.client.functions.calculateLevelFromExperience(updatedUserLevel.experience);
+
+			if (updatedUserLevel.level !== calculatedLevel) {
+				const [rolesAdded, rolesRemoved] = await this.client.functions.distributeLevelRoles(
+					message.member!,
+					updatedUserLevel,
+				);
+
+				const rolesModified = rolesAdded.length || rolesRemoved.length;
+				let levelUpMessage = ``;
+
+				if (rolesModified) {
+					if (!(rolesAdded.length && rolesRemoved.length)) levelUpMessage += " and";
+					if (rolesAdded.length)
+						levelUpMessage += ` earned the ${rolesAdded.map((role) => `<@&${role.id}>`).join(", ")} role${
+							rolesAdded.length > 1 ? "s" : ""
+						}`;
+					if (rolesAdded.length && rolesRemoved.length) levelUpMessage += " and";
+					if (rolesRemoved.length)
+						levelUpMessage += ` lost the ${rolesRemoved.map((role) => `<@&${role.id}>`).join(", ")} role${
+							rolesRemoved.length > 1 ? "s" : ""
+						}`;
+				}
+
+				await this.client.prisma.userLevel.update({
+					where: { userId_guildId: { userId: message.author.id, guildId: message.guild_id! } },
+					data: { level: calculatedLevel },
+				});
+
+				this.client.logger.info(
+					`${message.author.username}#${message.author.discriminator} has leveled ${
+						updatedUserLevel.level > calculatedLevel ? "down" : "up"
+					} to level ${calculatedLevel}${rolesModified ? levelUpMessage : ""}!`,
+				);
+
+				await this.client.api.channels.createMessage(message.channel_id, {
+					content: `<@${message.author.id}> has leveled ${
+						updatedUserLevel.level > calculatedLevel ? "down" : "up"
+					} to level ${calculatedLevel}${rolesModified ? levelUpMessage : ""}!`,
+					message_reference: {
+						message_id: message.id,
+						fail_if_not_exists: false,
+					},
+					allowed_mentions: { parse: [], replied_user: true },
+				});
+			}
+		}
+
+		return this.client.textCommandHandler.handleTextCommand({ data: message, shardId });
+	}
 }
-

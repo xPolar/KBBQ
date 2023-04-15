@@ -1,68 +1,33 @@
-import {
-    ApplicationCommandOptionData,
-    MessageActionRow,
-    MessageEmbed,
-    PermissionString,
-    Snowflake
-} from "discord.js";
-import { Document, WithId } from "mongodb";
+import type {
+	APIApplicationCommandInteractionDataBooleanOption,
+	APIApplicationCommandInteractionDataIntegerOption,
+	APIApplicationCommandInteractionDataMentionableOption,
+	APIApplicationCommandInteractionDataNumberOption,
+	APIApplicationCommandInteractionDataStringOption,
+	APIApplicationCommandInteractionDataSubcommandGroupOption,
+	APIApplicationCommandInteractionDataSubcommandOption,
+	APIAttachment,
+	APIInteractionDataResolvedChannel,
+	APIInteractionDataResolvedGuildMember,
+	APIRole,
+	APIUser,
+} from "@discordjs/core";
 
-export interface SlashCommandOptions {
-    description?: string;
-    options?: ApplicationCommandOptionData[];
-    permissions?: PermissionString[];
-    clientPermissions?: PermissionString[];
-    devOnly?: boolean;
-    guildOnly?: boolean;
-    ownerOnly?: boolean;
-    cooldown?: number;
+export interface InteractionArguments {
+	attachments?: Record<string, APIAttachment>;
+	booleans?: Record<string, APIApplicationCommandInteractionDataBooleanOption>;
+	channels?: Record<string, APIInteractionDataResolvedChannel>;
+	integers?: Record<string, APIApplicationCommandInteractionDataIntegerOption>;
+	members?: Record<string, APIInteractionDataResolvedGuildMember>;
+	mentionables?: Record<string, APIApplicationCommandInteractionDataMentionableOption>;
+	numbers?: Record<string, APIApplicationCommandInteractionDataNumberOption>;
+	roles?: Record<string, APIRole>;
+	strings?: Record<string, APIApplicationCommandInteractionDataStringOption>;
+	subCommand?: APIApplicationCommandInteractionDataSubcommandOption;
+	subCommandGroup?: APIApplicationCommandInteractionDataSubcommandGroupOption;
+	users?: Record<string, APIUser>;
 }
 
-export interface TextCommandOptions {
-    description: string;
-    aliases?: string[];
-    permissions?: PermissionString[];
-    clientPermissions?: PermissionString[];
-    devOnly?: boolean;
-    guildOnly?: boolean;
-    ownerOnly?: boolean;
-    cooldown?: number;
-}
-
-export interface ButtonOptions {
-    permissions: PermissionString[];
-    clientPermissions: PermissionString[];
-    devOnly?: boolean;
-    guildOnly?: boolean;
-    ownerOnly?: boolean;
-}
-
-export interface GeneratedMessage {
-    embeds: MessageEmbed[];
-    components: MessageActionRow[];
-    ephemeral: boolean;
-}
-
-export interface Stats {
-    messageCount: number;
-    commandsRun: number;
-}
-
-export interface CachedStats {
-    guilds: number;
-    users: number;
-    cachedUsers: number;
-    channels: number;
-    roles: number;
-}
-
-export interface GenerateTimestampOptions {
-    timestamp?: Date | number;
-    type?: "t" | "T" | "d" | "D" | "f" | "F" | "R";
-}
-
-export interface UserLevelDocument extends WithId<Document> {
-    userId: Snowflake;
-    experience: number;
-    level: number;
-}
+export type APIInteractionWithArguments<T> = T & {
+	arguments: InteractionArguments;
+};

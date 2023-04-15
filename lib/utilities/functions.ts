@@ -1,602 +1,483 @@
-import { createHash } from "crypto";
-import {
-    GuildMember,
-    MessageActionRow,
-    MessageAttachment,
-    MessageEmbed,
-    MessageEmbedOptions,
-    PermissionString,
-    Role,
-    Snowflake,
-    User
-} from "discord.js";
-import * as c from "canvas";
-import { WithId } from "mongodb";
-import { existsSync, mkdirSync, readdirSync } from "fs";
-import { permissionNames } from "./permissions.js";
-import BetterClient from "../extensions/BetterClient.js";
-import {
-    GeneratedMessage,
-    GenerateTimestampOptions,
-    UserLevelDocument
-} from "../../typings";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readdirSync } from "node:fs";
+import type { APIGuildMember, APIUser, APIRole, APIInteractionDataResolvedGuildMember } from "@discordjs/core";
+import type { UserLevel } from "@prisma/client";
+import canvas from "canvas";
+import Config from "../../config/bot.config.js";
+import type Language from "../classes/Language.js";
+import Logger from "../classes/Logger.js";
+import type ExtendedClient from "../extensions/ExtendedClient.js";
 
 export default class Functions {
-    /**
-     * Our Client.
-     * @private
-     */
-    private readonly client: BetterClient;
+	/**
+	 * Our extended client.
+	 */
+	private readonly client: ExtendedClient;
 
-    /**
-     * Our Canvas instance.
-     * @private
-     */
-    private readonly canvas;
+	/**
+	 * The canvas module.
+	 */
+	private readonly canvas: typeof canvas;
 
-    /**
-     * Create our functions.
-     * @param client Our client.
-     */
-    constructor(client: BetterClient) {
-        this.client = client;
+	/**
+	 * One second in milliseconds.
+	 */
+	private SEC = 1e3;
 
-        // @ts-ignore
-        this.canvas = c.default;
-        this.canvas.registerFont("./Comfortaa-Bold.ttf", {
-            family: "Comfortaa"
-        });
-        this.canvas.registerFont("./Discord.otf", {
-            family: "Discord"
-        });
-    }
+	/**
+	 * One minute in milliseconds.
+	 */
+	private MIN = this.SEC * 60;
 
-    /**
-     * Get all the files in all the subdirectories of a directory.
-     * @param directory The directory to get the files from.
-     * @param fileExtension The extension to search for.
-     * @param createDirIfNotFound Whether or not the parent directory should be created if it doesn't exist.
-     * @returns The files in the directory.
-     */
-    public getFiles(
-        directory: string,
-        fileExtension: string,
-        createDirIfNotFound: boolean = false
-    ): string[] {
-        if (createDirIfNotFound && !existsSync(directory)) mkdirSync(directory);
-        return readdirSync(directory).filter(file =>
-            file.endsWith(fileExtension)
-        );
-    }
+	/**
+	 * One hour in milliseconds.
+	 */
+	private HOUR = this.MIN * 60;
 
-    /**
-     * Generate a full primary message with a simple helper function.
-     * @param embedInfo The information to build our embed with.
-     * @param components The components for our message.
-     * @param ephemeral Whether our message should be ephemeral or not.
-     * @returns The generated primary message.
-     */
-    public generatePrimaryMessage(
-        embedInfo: MessageEmbedOptions,
-        components: MessageActionRow[] = [],
-        ephemeral: boolean = false
-    ): GeneratedMessage {
-        return {
-            embeds: [
-                new MessageEmbed(embedInfo).setColor(
-                    parseInt(this.client.config.colors.primary, 16)
-                )
-            ],
-            components,
-            ephemeral
-        };
-    }
+	/**
+	 * One day in milliseconds.
+	 */
+	private DAY = this.HOUR * 24;
 
-    /**
-     * Generate a full success message with a simple helper function.
-     * @param embedInfo The information to build our embed with.
-     * @param components The components for our message.
-     * @param ephemeral Whether our message should be ephemeral or not.
-     * @returns The generated success message.
-     */
-    public generateSuccessMessage(
-        embedInfo: MessageEmbedOptions,
-        components: MessageActionRow[] = [],
-        ephemeral: boolean = false
-    ): GeneratedMessage {
-        return {
-            embeds: [
-                new MessageEmbed(embedInfo).setColor(
-                    parseInt(this.client.config.colors.success, 16)
-                )
-            ],
-            components,
-            ephemeral
-        };
-    }
+	/**
+	 * One year in milliseconds.
+	 */
+	private YEAR = this.DAY * 365.25;
 
-    /**
-     * Generate a full warning message with a simple helper function.
-     * @param embedInfo The information to build our embed with.
-     * @param components The components for our message.
-     * @param ephemeral Whether our message should be ephemeral or not.
-     * @returns The generated warning message.
-     */
-    public generateWarningMessage(
-        embedInfo: MessageEmbedOptions,
-        components: MessageActionRow[] = [],
-        ephemeral: boolean = false
-    ): GeneratedMessage {
-        return {
-            embeds: [
-                new MessageEmbed(embedInfo).setColor(
-                    parseInt(this.client.config.colors.warning, 16)
-                )
-            ],
-            components,
-            ephemeral
-        };
-    }
+	public constructor(client: ExtendedClient) {
+		this.client = client;
 
-    /**
-     * Generate a full error message with a simple helper function.
-     * @param embedInfo The information to build our embed with.
-     * @param supportServer Whether or not to add the support server link as a component.
-     * @param components The components for our message.
-     * @param ephemeral Whether our message should be ephemeral or not.
-     * @returns The generated error message.
-     */
-    public generateErrorMessage(
-        embedInfo: MessageEmbedOptions,
-        components: MessageActionRow[] = [],
-        ephemeral: boolean = true
-    ): GeneratedMessage {
-        return {
-            embeds: [
-                new MessageEmbed(embedInfo).setColor(
-                    parseInt(this.client.config.colors.error, 16)
-                )
-            ],
-            components,
-            ephemeral
-        };
-    }
+		this.canvas = canvas;
+		this.canvas.registerFont("./Comfortaa-Bold.ttf", {
+			family: "Comfortaa",
+		});
+		this.canvas.registerFont("./Discord.otf", {
+			family: "Discord",
+		});
+	}
 
-    /**
-     * Upload content to the hastebin we use.
-     * @param content The content to upload.
-     * @param type The file type to append to the end of the haste.
-     * @return The URL to the uploaded content.
-     */
-    public async uploadHaste(
-        content: string,
-        type?: string
-    ): Promise<string | null> {
-        try {
-            const response = await fetch(
-                `${this.client.config.hastebin}/documents`,
-                {
-                    method: "POST",
-                    body: content,
-                    headers: {
-                        "User-Agent": `${this.client.config.botName}/${this.client.config.version}`
-                    }
-                }
-            );
+	/**
+	 * Get all of the files in a directory.
+	 *
+	 * @param directory The directory to get all of the files from.
+	 * @param fileExtension The file extension to search for, leave blank to get all files.
+	 * @param createDirectoryIfNotFound Whether or not the directory we want to search for should be created if it doesn't already exist.
+	 * @returns The files within the directory.
+	 */
+	public getFiles(directory: string, fileExtension: string, createDirectoryIfNotFound: boolean = false) {
+		if (createDirectoryIfNotFound && !existsSync(directory)) mkdirSync(directory);
 
-            const haste = await response.json();
+		return readdirSync(directory).filter((file) => file.endsWith(fileExtension));
+	}
 
-            return `${this.client.config.hastebin}/${haste.key}${
-                type ? `.${type}` : ".md"
-            }`;
-        } catch (error) {
-            this.client.logger.error(error);
-            this.client.logger.sentry.captureWithExtras(error, {
-                Hastebin: this.client.config.hastebin,
-                Content: content
-            });
-            return null;
-        }
-    }
+	/**
+	 * Parses the input string, returning the number of milliseconds.
+	 *
+	 * @param input The human-readable time string; eg: 10min, 10m, 10 minutes.
+	 * @param language The language to use for the parsing.
+	 * @returns The parsed value.
+	 */
+	public parse(input: string, language?: Language) {
+		if (!language) language = this.client.languageHandler.getLanguage("en-US");
 
-    /**
-     * Generate a random string of a given length.
-     * @param length The length of the string to generate.
-     * @param from The characters to use for the string.
-     * @returns The generated random ID.
-     */
-    public generateRandomId(
-        length: number,
-        from: string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-    ): string {
-        let generatedId = "";
-        for (let i = 0; i < length; i++)
-            generatedId += from[Math.floor(Math.random() * from.length)];
-        return generatedId;
-    }
+		const RGX = language.get("PARSE_REGEX");
+		const arr = input.toLowerCase().match(RGX);
+		let num: number;
+		// eslint-disable-next-line no-cond-assign
+		if (arr !== null && (num = Number.parseFloat(arr[1] || ""))) {
+			if (arr[3] !== null) return num * this.SEC;
+			if (arr[4] !== null) return num * this.MIN;
+			if (arr[5] !== null) return num * this.HOUR;
+			if (arr[6] !== null) return num * this.DAY;
+			if (arr[7] !== null) return num * this.DAY * 7;
+			if (arr[8] !== null) return num * this.YEAR;
+			return num;
+		}
 
-    /**
-     * Get the proper name of a permission.
-     * @param permission The permission to get the name of.
-     * @returns The proper name of the permission.
-     */
-    public getPermissionName(permission: PermissionString): string {
-        if (permissionNames.has(permission))
-            return permissionNames.get(permission)!;
-        return permission;
-    }
+		return null;
+	}
 
-    /**
-     * Generate a unix timestamp for Discord to be rendered locally per user.
-     * @param options The options to use for the timestamp.
-     * @returns The generated timestamp.
-     */
-    public generateTimestamp(options?: GenerateTimestampOptions): string {
-        let timestamp = options?.timestamp || new Date();
-        const type = options?.type || "f";
-        if (timestamp instanceof Date) timestamp = timestamp.getTime();
-        return `<t:${Math.floor(timestamp / 1000)}:${type}>`;
-    }
+	private _format(
+		value: number,
+		prefix: string,
+		type: "day" | "hour" | "minute" | "ms" | "second" | "year",
+		long: boolean,
+		language: Language,
+	) {
+		const number = Math.trunc(value) === value ? value : Math.trunc(value + 0.5);
 
-    /**
-     * Parse a string to a User.
-     * @param user The user to parse.
-     * @returns The parsed user.
-     */
-    public async parseUser(user?: string): Promise<User | undefined> {
-        if (!user) return undefined;
-        if (
-            (user.startsWith("<@") || user.startsWith("<@!")) &&
-            user.endsWith(">")
-        )
-            user = user.slice(2, -1);
-        if (user.startsWith("!")) user = user.slice(1);
-        try {
-            return (
-                this.client.users.cache.get(user) ||
-                this.client.users.cache.find(
-                    u => u.tag.toLowerCase() === user?.toLowerCase()
-                ) ||
-                (await this.client.users.fetch(user))
-            );
-        } catch (error: any) {
-            if (error.code === 50035) return undefined;
-            this.client.logger.error(error);
-            this.client.logger.sentry.captureWithExtras(error, { input: user });
-        }
-        return undefined;
-    }
+		if (type === "ms") return `${prefix}${number}ms`;
 
-    /**
-     * Turn a string into Title Case.
-     * @param string The string to convert.
-     * @returns The converted string.
-     */
-    public titleCase(string: string): string {
-        return string
-            .split(" ")
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ");
-    }
+		return `${prefix}${number}${
+			long
+				? ` ${language.get(
+						(number === 1 ? `${type}_ONE` : `${type}_OTHER`).toUpperCase() as Uppercase<
+							`${typeof type}_ONE` | `${typeof type}_OTHER`
+						>,
+				  )}`
+				: language.get(`${type}_SHORT`.toUpperCase() as Uppercase<`${typeof type}_SHORT`>)
+		}`;
+	}
 
-    /**
-     * Calculate what level someone is from their current amount of experience.
-     * @param experience Their current experience.
-     * @returns Their current level.
-     */
-    public calculateLevelFromExperience(experience: number): number {
-        return Math.floor(Math.sqrt((experience * 9) / 625)) || 0;
-    }
+	/**
+	 * Formats the millisecond count to a human-readable time string.
+	 *
+	 * @param milli The number of milliseconds.
+	 * @param long Whether or not the output should use the interval's long/full form; eg hour or hours instead of h.
+	 * @param language The language to use for formatting.
+	 * @returns The formatting count.
+	 */
+	public format(milli: number, long: boolean = true, language?: Language) {
+		if (!language) language = this.client.languageHandler.defaultLanguage!;
 
-    /**
-     * Calculate how much experience someone has from their current level.
-     * @param level Their current level.
-     * @returns Their current experience.
-     */
-    public calculateExperienceFromLevel(level: number): number {
-        return Math.ceil((625 * level ** 2) / 9);
-    }
+		const prefix = milli < 0 ? "-" : "";
+		const abs = milli < 0 ? -milli : milli;
 
-    /**
-     * Distribute all the level roles a user should have.
-     * @param member The member to distribute the roles for.
-     * @param document Their level document
-     */
-    public async distributeLevelRoles(
-        member: GuildMember,
-        document: WithId<UserLevelDocument>
-    ): Promise<[Role[], Role[]]> {
-        const validLevelRoles: Role[] = [];
-        const levelRolesMemberShouldHave: Role[] = [];
-        Object.entries(this.client.config.otherConfig.levelRoles).forEach(
-            ([key, value]) => {
-                const role = member.guild.roles.cache.get(value);
-                if (!role) return;
-                validLevelRoles.push(role);
-                if (
-                    this.client.functions.calculateLevelFromExperience(
-                        document.experience
-                    ) >= parseInt(key, 10)
-                )
-                    levelRolesMemberShouldHave.push(role);
-            }
-        );
-        const rolesAdded = levelRolesMemberShouldHave.filter(
-            role => !member.roles.cache.has(role.id)
-        );
-        const rolesRemoved = member.roles.cache
-            .filter(
-                role =>
-                    !levelRolesMemberShouldHave.includes(role) &&
-                    validLevelRoles.includes(role)
-            )
-            .map(role => role);
-        await member.roles.set(
-            member.roles.cache
-                .filter(role => !validLevelRoles.includes(role))
-                .map(role => role)
-                .concat(...levelRolesMemberShouldHave)
-        );
-        return [rolesAdded, rolesRemoved];
-    }
+		if (abs < this.SEC) return `${milli}${long ? " ms" : "ms"}`;
+		if (abs < this.MIN) return this._format(abs / this.SEC, prefix, "second", long, language);
+		if (abs < this.HOUR) return this._format(abs / this.MIN, prefix, "minute", long, language);
+		if (abs < this.DAY) return this._format(abs / this.HOUR, prefix, "hour", long, language);
+		if (abs < this.YEAR) return this._format(abs / this.DAY, prefix, "day", long, language);
 
-    /**
-     * Hash a string into SHA256.
-     * @param string The string to hash.
-     * @returns The hashed string.
-     */
-    public hash(string: string): string {
-        return createHash("sha256").update(string).digest("hex");
-    }
+		return this._format(abs / this.YEAR, prefix, "year", long, language);
+	}
 
-    /**
-     * Choose an item out of a list of items.
-     * @param choices The list of items to choose from.
-     * @returns The chosen item.
-     */
-    public random(choices: any[]): any {
-        return choices[Math.floor(Math.random() * choices.length)];
-    }
+	/**
+	 * Generate a unix timestamp for Discord to be rendered locally per user.
+	 *
+	 * @param options - The options to use for the timestamp.
+	 * @param options.timestamp - The timestamp to use, defaults to the current time.
+	 * @param options.type - The type of timestamp to generate, defaults to "f".
+	 * @return The generated timestamp.
+	 */
+	public generateTimestamp(options?: {
+		timestamp?: Date | number;
+		type?: "D" | "d" | "F" | "f" | "R" | "T" | "t";
+	}): string {
+		let timestamp = options?.timestamp ?? new Date();
+		const type = options?.type ?? "f";
+		if (timestamp instanceof Date) timestamp = timestamp.getTime();
+		return `<t:${Math.floor(timestamp / 1_000)}:${type}>`;
+	}
 
-    /**
-     * Abbreviate a number.
-     * @param number The number we want to abbreviate.
-     * @returns The abbreviated number.
-     */
-    public abbreviateNumber(number: number): string {
-        const suffixes = ["", "K", "M", "B", "T"];
-        let newNumber: number | string = number;
-        let suffixNum = 0;
-        while (newNumber >= 1000) {
-            newNumber /= 1000;
-            suffixNum++;
-        }
-        newNumber = newNumber.toPrecision(3);
-        newNumber += suffixes[suffixNum];
-        return newNumber;
-    }
+	/**
+	 * Generate a unix timestamp for Discord to be rendered locally per user.
+	 *
+	 * @param options The options to use for the timestamp.
+	 * @param options.timestamp The timestamp to use, defaults to the current time.
+	 * @param options.type The type of timestamp to generate, defaults to "f".
+	 * @return The generated timestamp.
+	 */
+	// eslint-disable-next-line sonarjs/no-identical-functions
+	public static generateTimestamp(options?: {
+		timestamp?: Date | number;
+		type?: "D" | "d" | "F" | "f" | "R" | "T" | "t";
+	}): string {
+		let timestamp = options?.timestamp ?? new Date();
+		const type = options?.type ?? "f";
+		if (timestamp instanceof Date) timestamp = timestamp.getTime();
+		return `<t:${Math.floor(timestamp / 1_000)}:${type}>`;
+	}
 
-    /**
-     * Generate an image level card.
-     * @param member The member to generate a level card for.
-     * @param document The member's level document.
-     * @returns The generated level card.
-     */
-    public async generateLevelCard(
-        member: GuildMember,
-        document: Pick<UserLevelDocument, "level" | "experience">
-    ): Promise<MessageAttachment> {
-        const { experience } = document;
-        const level = this.calculateLevelFromExperience(experience);
-        const neededExperience = this.calculateExperienceFromLevel(level + 1);
+	/**
+	 * Upload content to a hastebin server.
+	 *
+	 * @param content The content to upload to the hastebin server.
+	 * @param options The options to use for the upload.
+	 * @param options.server The server to upload to, defaults to the client's configured hastebin server.
+	 * @param options.type The type of the content, defaults to "md".
+	 * @returns The URL to the uploaded content.
+	 */
+	public async uploadToHastebin(content: string, options?: { server?: string; type?: string }) {
+		try {
+			const response = await fetch(`${options?.server ?? this.client.config.hastebin}/documents`, {
+				method: "POST",
+				body: content,
+				headers: {
+					"User-Agent": `${this.client.config.botName.toLowerCase().split(" ").join("_")}/${
+						this.client.config.version
+					}`,
+				},
+			});
 
-        const canvas = this.canvas.createCanvas(800, 200);
-        const context = canvas.getContext("2d");
-        context.fillStyle = "#6C3400";
+			const responseJSON = await response.json();
 
-        const background = await this.canvas.loadImage(
-            "https://cdn.polar.blue/r/Frame_276.png"
-        );
+			return `${options?.server ?? this.client.config.hastebin}/${responseJSON.key}.${options?.type ?? "md"}`;
+		} catch (error) {
+			this.client.logger.error(error);
+			await this.client.logger.sentry.captureWithExtras(error, {
+				Hastebin: options?.server ?? this.client.config.hastebin,
+				Content: content,
+			});
 
-        context.drawImage(background, 0, 0);
+			return null;
+		}
+	}
 
-        context.beginPath();
-        context.moveTo(32, 188);
-        context.arc(32, 172, 16, 0.5 * Math.PI, 1.5 * Math.PI);
-        context.lineTo(32, 156);
-        context.lineTo(768, 156);
-        context.arc(768, 172, 16, 1.5 * Math.PI, 0.5 * Math.PI);
-        context.closePath();
-        context.globalAlpha = 0.5;
-        context.fill();
-        context.globalAlpha = 1;
+	/**
+	 * Upload content to a hastebin server. This is a static method.
+	 *
+	 * @param content The content to upload to the hastebin server.
+	 * @param options The options to use for the upload.
+	 * @param options.server The server to upload to, defaults to the client's configured hastebin server.
+	 * @param options.type The type of the content, defaults to "md".
+	 * @returns The URL to the uploaded content.
+	 */
+	public static async uploadToHastebin(content: string, options?: { server?: string; type?: string }) {
+		try {
+			const response = await fetch(`${options?.server ?? Config.hastebin}/documents`, {
+				method: "POST",
+				body: content,
+				headers: {
+					"User-Agent": `${Config.botName.toLowerCase().split(" ").join("_")}/${Config.version}`,
+				},
+			});
 
-        context.beginPath();
-        context.moveTo(32, 188);
-        context.arc(32, 172, 16, 0.5 * Math.PI, 1.5 * Math.PI);
-        context.lineTo(768 * (experience / neededExperience), 156);
-        context.arc(
-            Math.max(32, 768 * (experience / neededExperience)),
-            172,
-            16,
-            1.5 * Math.PI,
-            0.5 * Math.PI
-        );
-        context.lineTo(32, 188);
-        context.closePath();
-        context.fill();
+			const responseJSON = await response.json();
 
-        context.font = "24px Comfortaa";
-        context.fillText(
-            `Level: ${level}   XP: ${this.abbreviateNumber(
-                experience
-            )}/${this.abbreviateNumber(neededExperience)}`,
-            156,
-            120
-        );
+			return `${options?.server ?? Config.hastebin}/${responseJSON.key}.${options?.type ?? "md"}`;
+		} catch (error) {
+			Logger.error(error);
+			await Logger.sentry.captureWithExtras(error, {
+				Hastebin: options?.server ?? Config.hastebin,
+				Content: content,
+			});
 
-        context.font = "40px Discord";
-        context.textAlign = "left";
+			return null;
+		}
+	}
 
-        const name = member.user.username;
-        const usertext =
-            name.length > 16
-                ? `${name.substring(0, 16)}...`
-                : `${name}#${member.user.discriminator}`;
+	/**
+	 * Verify if the input is a function.
+	 *
+	 * @param input The input to verify.
+	 * @returns Whether the input is a function or not.
+	 */
+	public isFunction(input: any): boolean {
+		return typeof input === "function";
+	}
 
-        context.fillText(usertext, 156, 60);
-        context.fillRect(156, 80, context.measureText(usertext).width, 4);
+	/**
+	 * Verify if an object is a promise.
+	 *
+	 * @param input The object to verify.
+	 * @returns Whether the object is a promise or not.
+	 */
+	public isThenable(input: any): boolean {
+		if (!input) return false;
+		return (
+			input instanceof Promise ||
+			(input !== Promise.prototype && this.isFunction(input.then) && this.isFunction(input.catch))
+		);
+	}
 
-        context.beginPath();
-        context.arc(76, 76, 64, 0, Math.PI * 2);
-        context.closePath();
-        context.strokeStyle = "#6C3400";
-        context.lineWidth = "4";
-        context.stroke();
+	/**
+	 * Hash a string into SHA256.
+	 *
+	 * @param string The string to hash.
+	 * @return The hashed string.
+	 */
+	public hash(string: string): string {
+		return createHash("sha256").update(string).digest("hex");
+	}
 
-        context.beginPath();
-        context.arc(76, 76, 60, 0, Math.PI * 2);
-        context.closePath();
-        context.clip();
+	/**
+	 * Calculate what level a user is from their experience.
+	 *
+	 * @param experience The experience to calculate the level from.
+	 * @returns The level calculated from the experience.
+	 */
+	public calculateLevelFromExperience(experience: number) {
+		return Math.floor(Math.sqrt((experience * 9) / 625)) ?? 0;
+	}
 
-        const avatar = await this.canvas.loadImage(
-            member.user.displayAvatarURL({ format: "png" })
-        );
-        context.drawImage(avatar, 16, 16, 120, 120);
+	/**
+	 * Calculate what experience a user is from their level.
+	 *
+	 * @param level The level to calculate the experience from.
+	 * @returns The experience calculated from the level.
+	 */
+	public calculateExperienceFromLevel(level: number) {
+		return Math.ceil((625 * level ** 2) / 9);
+	}
 
-        return new MessageAttachment(canvas.toBuffer(), "levelCard.png");
-    }
+	/**
+	 * Abbreviate a number.
+	 *
+	 * @param number The number we want to abbreviate.
+	 * @returns The abbreviated number.
+	 */
+	public abbreviateNumber(number: number): string {
+		const suffixes = ["", "K", "M", "B", "T"];
+		let newNumber: number | string = number;
+		let suffixNum = 0;
+		while (newNumber >= 1_000) {
+			newNumber /= 1_000;
+			suffixNum++;
+		}
 
-    public async generateLeaderboardMessage(
-        member: GuildMember
-    ): Promise<string> {
-        let message = "";
-        const documents = await this.client.cache.getAllLevelDocuments(true);
-        message += documents
-            .splice(0, 10)
-            .map(
-                (document, index) =>
-                    `${index + 1}. <@${
-                        document.userId
-                    }> **Level ${this.client.functions.calculateLevelFromExperience(
-                        document.experience
-                    )}** XP: ${document.experience}`
-            )
-            .join("\n");
-        if (!message.includes(member.user.id)) {
-            const index = documents.indexOf(
-                documents.find(
-                    document => document.userId === member.user.id
-                ) as WithId<UserLevelDocument>
-            );
-            if (index !== -1) {
-                message += "\n━━━━━━━━━━━━━━";
-                for (let i = -1; i <= 1; i++) {
-                    message += `\n${index + i + 11}. <@${
-                        documents[index + i].userId
-                    }> **Level ${this.client.functions.calculateLevelFromExperience(
-                        documents[index + i].experience
-                    )}** XP: ${documents[index + i].experience}`;
-                }
-            }
-        }
-        return message;
-    }
+		newNumber = newNumber.toPrecision(3);
+		newNumber += suffixes[suffixNum];
+		return newNumber;
+	}
 
-    public async generateWeeklyLeaderboardMessage(
-        member: GuildMember,
-        type: "text" | "voice"
-    ) {
-        let message = "";
-        const documents = await this.client.cache.getAllLevelDocuments(
-            true,
-            true,
-            type
-        );
-        message += documents
-            .splice(0, 10)
-            .map(
-                (document, index) =>
-                    `${index + 1}. <@${document.userId}> **${
-                        document[this.getWeekOfTheYear()]?.[type] || 0
-                    } ${
-                        type === "text"
-                            ? `message${
-                                  (document[this.getWeekOfTheYear()]?.[type] ||
-                                      0) === 1
-                                      ? ""
-                                      : "s"
-                              } sent`
-                            : `minute${
-                                  (document[this.getWeekOfTheYear()]?.[type] ||
-                                      0) === 1
-                                      ? ""
-                                      : "s"
-                              } in voice.`
-                    }**`
-            )
-            .join("\n");
-        if (!message.includes(member.user.id)) {
-            const index = documents.indexOf(
-                documents.find(
-                    document => document.userId === member.user.id
-                ) as WithId<UserLevelDocument>
-            );
-            if (index !== -1) {
-                message += "\n━━━━━━━━━━━━━━";
-                for (let i = -1; i <= 1; i++) {
-                    message += `\n${index + i + 11}. <@${
-                        documents[index + i].userId
-                    }> **${
-                        documents[index + 1][this.getWeekOfTheYear()]?.[type] ||
-                        0
-                    } ${
-                        type === "text"
-                            ? `message${
-                                  (documents[index + 1][
-                                      this.getWeekOfTheYear()
-                                  ]?.[type] || 0) === 1
-                                      ? ""
-                                      : "s"
-                              } sent`
-                            : `minute${
-                                  (documents[index + 1][
-                                      this.getWeekOfTheYear()
-                                  ]?.[type] || 0) === 1
-                                      ? ""
-                                      : "s"
-                              } in voice.`
-                    }**`;
-                }
-            }
-        }
-        return message;
-    }
+	/**
+	 * Generate a level card for a user.
+	 *
+	 * @param options The options to use when creating this level card.
+	 * @param options.member The member to create the level card for.
+	 * @param options.user The user to create the level card for.
+	 * @param options.userLevel The user's level to create the level card for.
+	 * @returns A Buffer containing the level card.
+	 */
+	public async generateLevelCard({
+		member,
+		user,
+		userLevel,
+	}: {
+		member: APIInteractionDataResolvedGuildMember | undefined;
+		user: APIUser;
+		userLevel: UserLevel;
+	}) {
+		const level = this.calculateLevelFromExperience(userLevel.experience);
+		const neededExperience = this.calculateExperienceFromLevel(level + 1);
 
-    /**
-     * Get whether a user is an admin or not.
-     * @param snowflake The user ID to check.
-     * @returns Whether the user is an admin or not.
-     */
-    public isAdmin(snowflake: Snowflake) {
-        return this.client.config.admins.includes(snowflake);
-    }
+		const canvas = this.canvas.createCanvas(800, 200);
+		const context = canvas.getContext("2d");
+		context.fillStyle = "#6C3400";
 
-    /**
-     * Get the
-     * @param date The dae to get the week of.
-     * @returns The number of the week and current year.
-     */
-    public getWeekOfTheYear(date?: Date) {
-        if (!date) date = new Date();
-        const januaryFirst = new Date(date.getUTCFullYear(), 0, 1);
-        const numberOfDays = Math.floor(
-            // @ts-ignore
-            Math.abs(date - januaryFirst) / (24 * 60 * 60 * 100)
-        );
-        return `${date.getUTCFullYear}_${Math.ceil(
-            (date.getUTCDay() + 1 + numberOfDays) / 7
-        )}`;
-    }
+		const background = await this.canvas.loadImage("https://cdn.polar.blue/r/Frame_276.png");
+
+		context.drawImage(background, 0, 0);
+
+		// Experience needed bar
+		context.beginPath();
+		context.moveTo(32, 188);
+		context.arc(32, 172, 16, 0.5 * Math.PI, 1.5 * Math.PI);
+		context.lineTo(32, 156);
+		context.lineTo(768, 156);
+		context.arc(768, 172, 16, 1.5 * Math.PI, 0.5 * Math.PI);
+		context.closePath();
+
+		context.globalAlpha = 0.5;
+		context.fill();
+		context.globalAlpha = 1;
+
+		// Current experience bar
+		context.beginPath();
+		context.moveTo(32, 188);
+		context.arc(32, 172, 16, 0.5 * Math.PI, 1.5 * Math.PI);
+		context.lineTo(768 * (userLevel.experience / neededExperience), 156);
+		context.arc(Math.max(32, 768 * (userLevel.experience / neededExperience)), 172, 16, 1.5 * Math.PI, 0.5 * Math.PI);
+		context.lineTo(32, 188);
+		context.closePath();
+		context.fill();
+
+		// Leveling information
+		context.font = "24px Comfortaa";
+		context.fillText(
+			`Level: ${level}   XP: ${this.abbreviateNumber(userLevel.experience)}/${this.abbreviateNumber(neededExperience)}`,
+			156,
+			120,
+		);
+
+		// Username
+		context.font = "40px Discord";
+		context.textAlign = "left";
+
+		const name = `${user.username}#${user.discriminator}`;
+		const userText = name.length > 16 ? `${name.slice(0, 16)}...` : name;
+
+		context.fillText(userText, 156, 60);
+		context.fillRect(156, 80, context.measureText(userText).width, 4);
+
+		// Circle around avatar
+		context.beginPath();
+		context.arc(76, 76, 64, 0, Math.PI * 2);
+		context.closePath();
+		context.strokeStyle = "#6C3400";
+		context.lineWidth = 4;
+		context.stroke();
+
+		// Circle for avatar
+		context.beginPath();
+		context.arc(76, 76, 60, 0, Math.PI * 2);
+		context.closePath();
+		context.clip();
+
+		// Avatar
+		const avatar = await this.canvas.loadImage(
+			`https://cdn.discordapp.com/${
+				member?.avatar || user.avatar
+					? member?.avatar
+						? `guilds/${userLevel.guildId}/users/${user.id}/avatars/${member.avatar}.png`
+						: `avatars/${user.id}/${user.avatar}.png`
+					: `embed/avatars/${user.discriminator}.png`
+			}`,
+		);
+		context.drawImage(avatar, 16, 16, 120, 120);
+
+		return canvas.toBuffer();
+	}
+
+	/**
+	 * Get the week of year from a date.
+	 *
+	 * @param date The date to get the week of year from. Defaults to the current date.
+	 * @returns The week of year in the format of `year_week`, such as 2023_123.
+	 */
+	public getWeekOfYear(date?: Date) {
+		if (!date) date = new Date();
+
+		const januaryFirst = new Date(date.getUTCFullYear(), 0, 1);
+		const numberOfDays = Math.floor(Math.abs(date.getTime() - januaryFirst.getTime()) / (24 * 60 * 60 * 100));
+
+		return `${date.getUTCFullYear()}_${Math.ceil((date.getUTCDay() + 1 + numberOfDays) / 7)}`;
+	}
+
+	/**
+	 * Distribute the proper roles to a user based on their leveling information.
+	 *
+	 * @param member The member to distribute the level roles to.
+	 * @param userLevel The user's current leveling information.
+	 * @returns What roles have been added and or taken from the user in the format of [listOfAddedRoleIds, listOfRemovedRoleIds].
+	 */
+	public async distributeLevelRoles(member: APIGuildMember, userLevel: UserLevel) {
+		const validLevelRoles: APIRole[] = [];
+		const levelRolesMemberShouldHave: APIRole[] = [];
+
+		if (!this.client.guildRolesCache.get(userLevel.guildId)) {
+			const guildRoles = new Map();
+
+			for (const guildRole of await this.client.api.guilds.getRoles(userLevel.guildId))
+				guildRoles.set(guildRole.id, guildRole);
+
+			this.client.guildRolesCache.set(userLevel.guildId, guildRoles);
+		}
+
+		const guildRoles = this.client.guildRolesCache.get(userLevel.guildId)!;
+
+		const currentLevel = this.client.functions.calculateLevelFromExperience(userLevel.experience);
+
+		for (const [key, value] of Object.entries(this.client.config.otherConfig.levelRoles)) {
+			const validRole = guildRoles.get(value);
+			if (!validRole) continue;
+
+			validLevelRoles.push(validRole);
+
+			if (currentLevel >= Number(key)) levelRolesMemberShouldHave.push(validRole);
+		}
+
+		const rolesAdded = levelRolesMemberShouldHave.filter((role) => !member.roles.includes(role.id));
+		const rolesRemoved = validLevelRoles.filter(
+			(role) => member.roles.includes(role.id) && !levelRolesMemberShouldHave.includes(role),
+		);
+		const roleIdsRemoved = rolesRemoved.map((role) => role.id);
+
+		await this.client.api.guilds.editMember(userLevel.guildId, userLevel.userId, {
+			roles: member.roles.filter((role) => !roleIdsRemoved.includes(role)).concat(rolesAdded.map((role) => role.id)),
+		});
+
+		return [rolesAdded, rolesRemoved] as const;
+	}
 }
-

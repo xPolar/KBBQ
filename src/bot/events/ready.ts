@@ -1,35 +1,31 @@
+import type { GatewayReadyDispatchData, WithIntrinsicProps } from "@discordjs/core";
+import { GatewayDispatchEvents } from "@discordjs/core";
 import EventHandler from "../../../lib/classes/EventHandler.js";
+import type ExtendedClient from "../../../lib/extensions/ExtendedClient.js";
 
 export default class Ready extends EventHandler {
-    override async run() {
-        await this.client.application?.fetch();
-        this.client.dataDog.increment("events", 1, ["event:ready"]);
-        const allGuilds = await this.client.shard?.broadcastEval(async c =>
-            c.guilds.cache.map(
-                guild =>
-                    `${guild.name} [${guild.id}] - ${guild.memberCount} members.`
-            )
-        );
-        const guildsStringList: string[] = [];
-        // @ts-ignore
-        for (let i = 0; i < allGuilds.length; i++) {
-            // @ts-ignore
-            guildsStringList.push(`Shard ${i + 1}\n${allGuilds[i].join("\n")}`);
-        }
-        const stats = await this.client.fetchStats();
-        this.client.logger.info(
-            `Logged in as ${this.client.user?.tag} [${
-                this.client.user?.id
-            }] with ${
-                stats.guilds
-            } guilds (${await this.client.functions.uploadHaste(
-                `Currently in ${stats.guilds} guilds with ${
-                    stats.users
-                } users.\n\n${guildsStringList.join("\n\n")}`
-            )}) and ${stats.users} users.`
-        );
-        this.client.voiceLeveling.startVoiceLeveling();
-        this.client.dataDog.gauge("guilds", stats.guilds);
-        this.client.dataDog.gauge("users", stats.users);
-    }
+	public constructor(client: ExtendedClient) {
+		super(client, GatewayDispatchEvents.Ready, false);
+	}
+
+	/**
+	 * Contains the initial state information.
+	 *
+	 * https://discord.com/developers/docs/topics/gateway-events#ready
+	 */
+	public override async run({ shardId, data }: WithIntrinsicProps<GatewayReadyDispatchData>) {
+		for (const guild of data.guilds) this.client.guildOwnersCache.set(guild.id, "");
+
+		this.client.logger.info(
+			`Logged in as ${data.user.username}#${data.user.discriminator} [${data.user.id}] on Shard ${shardId} with ${data.guilds.length} guilds.`,
+		);
+
+		await this.client.logger.webhookLog("console", {
+			content: `${this.client.functions.generateTimestamp()} Logged in as ${data.user.username}#${
+				data.user.discriminator
+			} [${data.user.id}] on Shard ${shardId} with ${data.guilds.length} guilds.`,
+			allowed_mentions: { parse: [] },
+			username: `${this.client.config.botName} | Console Logs`,
+		});
+	}
 }

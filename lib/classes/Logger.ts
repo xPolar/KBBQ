@@ -1,110 +1,99 @@
-/* eslint-disable no-console */
-import {
-    bgGreenBright,
-    bgMagentaBright,
-    bgRedBright,
-    bgYellowBright,
-    blackBright,
-    bold
-} from "colorette";
-import { format } from "util";
-import { WebhookClient, WebhookMessageOptions } from "discord.js";
+import process from "node:process";
+import { format } from "node:util";
+import type { RESTPostAPIWebhookWithTokenJSONBody } from "@discordjs/core";
+import { bgGreenBright, bgMagentaBright, bgRedBright, bgYellowBright, bold } from "colorette";
 import init from "../utilities/sentry.js";
 
 export class Logger {
-    /**
-     * Our Sentry logger.
-     */
-    public readonly sentry;
+	/**
+	 * Our Sentry client.
+	 */
+	public readonly sentry;
 
-    /**
-     * The list of webhooks our Logger can use.
-     */
-    private readonly webhooks: Record<string, WebhookClient>;
+	/**
+	 * A Map<string, WebhookClient> whose key value pair correlates to the type of log we want and the WebhookClient for the log.
+	 */
+	private readonly webhooks: Map<string, string>;
 
-    constructor() {
-        this.sentry = init();
-        this.webhooks = {};
-    }
+	/**
+	 * Create our logger.
+	 */
+	public constructor() {
+		this.sentry = init();
+		this.webhooks = new Map();
+	}
 
-    /**
-     * Get the current timestamp.
-     * @returns The current timestamp in the format of [DD/MM/YYYY @ HH:mm:SS].
-     */
-    private static get timestamp(): string {
-        const now = new Date();
-        const [year, month, day] = now.toISOString().substr(0, 10).split("-");
-        return `${day}/${month}/${year} @ ${now.toISOString().substr(11, 8)}`;
-    }
+	/**
+	 * Get the current timestamp.
+	 *
+	 * @returns The current timestamp in the format of MM/DD/YYYY @ HH:mm:SS.
+	 */
+	public get timestamp(): string {
+		const nowISOString = new Date().toISOString();
+		const [year, month, day] = nowISOString.slice(0, 10).split("-");
+		return `${month}/${day}/${year} @ ${nowISOString.slice(11, 19)}`;
+	}
 
-    /**
-     * Log out a debug statement.
-     * @param args The arguments to log out.
-     */
-    public debug(...args: string | any): void {
-        console.log(
-            bold(bgMagentaBright(`[${Logger.timestamp}]`)),
-            bold(format(...args))
-        );
-    }
+	/**
+	 * Log out a debug statement.
+	 *
+	 * @param args The arguments to log out.
+	 */
+	public debug(...args: any | string): void {
+		console.log(bold(bgMagentaBright(`[${this.timestamp}]`)), bold(format(...args)));
+	}
 
-    /**
-     * Log out a debug statement.
-     * @param args The arguments to log out.
-     */
-    public info(...args: string | any): void {
-        console.log(
-            bold(bgGreenBright(blackBright(`[${Logger.timestamp}]`))),
-            bold(format(...args))
-        );
-    }
+	/**
+	 * Log out an info statement.
+	 *
+	 * @param args The arguments to log out.
+	 */
+	public info(...args: any | string): void {
+		console.log(bold(bgGreenBright(`[${this.timestamp}]`)), bold(format(...args)));
+	}
 
-    /**
-     * Log out a debug statement.
-     * @param args The arguments to log out.
-     */
-    public warn(...args: string | any): void {
-        console.log(
-            bold(bgYellowBright(blackBright(`[${Logger.timestamp}]`))),
-            bold(format(...args))
-        );
-    }
+	/**
+	 * Log out a warn statement.
+	 *
+	 * @param args The arguments to log out.
+	 */
+	public warn(...args: any | string): void {
+		console.log(bold(bgYellowBright(`[${this.timestamp}]`)), bold(format(...args)));
+	}
 
-    /**
-     * Log out an error statement.
-     * @param error The error to log out.
-     * @param args TBe arguments to log out.
-     */
-    public error(error: any | null, ...args: string | any): void {
-        if (error)
-            console.log(
-                bold(bgRedBright(`[${Logger.timestamp}]`)),
-                error,
-                bold(format(...args))
-            );
-        else
-            console.log(
-                bold(bgRedBright(`[${Logger.timestamp}]`)),
-                bold(format(...args))
-            );
-    }
+	/**
+	 * Log out an error statement.
+	 *
+	 * @param error The error to log out.
+	 * @param args The arguments to log out.
+	 */
+	public error(error: any | null, ...args: any | string): void {
+		if (error) console.log(bold(bgRedBright(`[${this.timestamp}]`)), error, bold(format(...args)));
+		else console.log(bold(bgRedBright(`[${this.timestamp}]`)), bold(format(...args)));
+	}
 
-    /**
-     * Log a message to Discord through a webhook.
-     * @param type The type to log out, make sure that the webhook is provided in your .env file in the format as ${TYPE}_HOOK=...
-     * @param options The options for the webhook you want to send.
-     */
-    public async webhookLog(type: string, options: WebhookMessageOptions) {
-        if (!type) throw new Error("No webhook type provided!");
-        else if (!this.webhooks[type.toLowerCase()]) {
-            const webhookURL = process.env[`${type.toUpperCase()}_HOOK`];
-            if (!webhookURL) throw new Error(`Invalid webhook type provided!`);
-            this.webhooks[type.toLowerCase()] = new WebhookClient({
-                url: process.env[`${type.toUpperCase()}_HOOK`]!
-            });
-        }
-        return this.webhooks[type.toLowerCase()]!.send(options);
-    }
+	/**
+	 * Log a message to Discord through a webhook.
+	 *
+	 * @param type The webhook type to log out to, make sure that the webhook provided in your .env file is in the format ${TYPE}_HOOK=...
+	 * @param _options The options for the message we want to send with the webhook.
+	 * @returns The message that was sent.
+	 */
+	public async webhookLog(type: string, _options: RESTPostAPIWebhookWithTokenJSONBody) {
+		if (!type) throw new Error("No webhook type has been provided!");
+		else if (!this.webhooks.get(type.toLowerCase())) {
+			const webhookURL = process.env[`${type.toUpperCase()}_HOOK`];
+			if (!webhookURL) throw new Error(`No webhook URL has been provided for ${type}!`);
+
+			this.webhooks.set(type.toLowerCase(), webhookURL);
+		}
+
+		// We use ! here as if the webhook doesn't exist, we throw an error above.
+
+		// TODO: Properly implement webhooks. this.webhooks is of type Record<string, string>, so we will probably
+		// just use fetch to send the webhook.
+		// return this.webhooks.get(type.toLowerCase())!.send(options);
+	}
 }
 
 export default new Logger();
