@@ -298,6 +298,11 @@ export default class ExtendedClient extends Client {
 		const currentWeek = this.functions.getWeekOfYear();
 
 		for (const [guildId, userIds] of this.usersInVoice) {
+			if (!userIds.size) continue;
+
+			this.submitMetric("users_in_voice", "set", userIds.size, { guildId: guildId.toString() });
+			this.submitMetric("minutes_in_voice", "inc", userIds.size, { guildId: guildId.toString() });
+
 			const [upsertedLevels] = await Promise.all([
 				this.prisma.$transaction(
 					[...userIds.values()].map((userId) =>

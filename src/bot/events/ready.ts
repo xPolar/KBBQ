@@ -14,6 +14,8 @@ export default class Ready extends EventHandler {
 	 * https://discord.com/developers/docs/topics/gateway-events#ready
 	 */
 	public override async run({ shardId, data }: WithIntrinsicProps<GatewayReadyDispatchData>) {
+		this.client.submitMetric("guild_count", "set", data.guilds.length, { shard: shardId.toString() });
+
 		for (const guild of data.guilds) this.client.guildOwnersCache.set(guild.id, "");
 
 		this.client.logger.info(

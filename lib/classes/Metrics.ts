@@ -19,10 +19,6 @@ const metrics = {
 		help: "The number of guilds the server is in.",
 		labelNames: ["shard"] as const,
 	},
-	user_count: {
-		help: "The number of users the bot can see.",
-		labelNames: ["shard"] as const,
-	},
 	latency: {
 		help: "The latency of the bot.",
 		labelNames: ["shard"] as const,
@@ -31,25 +27,21 @@ const metrics = {
 		help: "The number of websocket events the bot has received.",
 		labelNames: ["type", "shard"] as const,
 	},
-	total_raid_users: {
-		help: "The total number of users the bot has detected in raids.",
-		labelNames: ["shard", "guildId"] as const,
+	minutes_in_voice: {
+		help: "The number of total minutes people have spent in voice channels.",
+		labelNames: ["guildId"] as const,
 	},
-	total_raid_bans: {
-		help: "The total number of users the bot has banned in raids.",
-		labelNames: ["shard", "guildId"] as const,
+	users_in_voice: {
+		help: "The number of users in voice channels.",
+		labelNames: ["guildId"] as const,
 	},
-	failed_raids: {
-		help: "The total number of raids that have failed for any reason.",
-		labelNames: ["shard", "guildId", "reason"] as const,
+	user_levels: {
+		help: "The total number of users who have a level.",
+		labelNames: ["guildId", "shard"] as const,
 	},
-	failed_bans: {
-		help: "The total number of bans that have failed for any reason.",
-		labelNames: ["shard", "guildId", "reason"] as const,
-	},
-	successful_raids: {
-		help: "The total number of raids that have been successfully detected.",
-		labelNames: ["shard", "guildId", "raidersBanned"] as const,
+	user_activity: {
+		help: "The total number of users who have activity.",
+		labelNames: ["guildId", "shard", "currentWeek", "type"] as const,
 	},
 };
 

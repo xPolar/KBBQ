@@ -10,6 +10,7 @@ declare global {
 			FASTIFY_PORT: string;
 			GUILD_HOOK: string;
 			NODE_ENV: "development" | "production";
+			PROMETHEUS_AUTH: string;
 			SENTRY_DSN: string;
 		}
 	}

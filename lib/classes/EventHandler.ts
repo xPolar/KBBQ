@@ -42,7 +42,9 @@ export default class EventHandler {
 	 * @param args The arguments for our event.
 	 * @returns The result of our event.
 	 */
-	private async _run(...args: any) {
+	private async _run(...args: any[]) {
+		this.client.submitMetric("websocket_events", "inc", 1, { type: this.name });
+
 		try {
 			return await this.run(...args);
 		} catch (error) {

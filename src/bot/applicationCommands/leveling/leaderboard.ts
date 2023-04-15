@@ -91,6 +91,7 @@ export default class Leaderboard extends ApplicationCommand {
 	public override async run({
 		interaction,
 		language,
+		shardId,
 	}: {
 		interaction: APIInteractionWithArguments<APIApplicationCommandInteraction>;
 		language: Language;
@@ -104,6 +105,12 @@ export default class Leaderboard extends ApplicationCommand {
 				where: { guildId: interaction.guild_id! },
 				orderBy: { level: "desc" },
 			});
+
+			this.client.submitMetric("user_levels", "set", sortedUserLevels.length, {
+				guildId: interaction.guild_id!,
+				shard: shardId.toString(),
+			});
+
 			const top10UserLevels = sortedUserLevels.slice(0, 10);
 
 			let leaderboardMessage = top10UserLevels
@@ -168,6 +175,14 @@ export default class Leaderboard extends ApplicationCommand {
 			},
 			orderBy: type === "MESSAGES" ? { messages: "desc" } : { minutesInVoice: "desc" },
 		});
+
+		this.client.submitMetric("user_activity", "set", sortedWeeklyActivity.length, {
+			currentWeek: this.client.functions.getWeekOfYear(),
+			guildId: interaction.guild_id!,
+			shard: shardId.toString(),
+			type: type.toLowerCase(),
+		});
+
 		const top10WeeklyActivity = sortedWeeklyActivity.slice(0, 10);
 
 		let leaderboardMessage = top10WeeklyActivity

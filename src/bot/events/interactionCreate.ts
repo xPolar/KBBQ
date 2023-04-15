@@ -23,6 +23,11 @@ export default class InteractionCreate extends EventHandler {
 			shard: shardId.toString(),
 		});
 
+		this.client.submitMetric("user_locales", "inc", 1, {
+			locale: (data.member?.user ?? data.user!).locale ?? this.client.languageHandler.defaultLanguage!.id,
+			shard: shardId.toString(),
+		});
+
 		if (data.type === InteractionType.ApplicationCommand)
 			return this.client.applicationCommandHandler.handleApplicationCommand({
 				data,
