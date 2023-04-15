@@ -54,7 +54,7 @@ export default class MessageCreate extends EventHandler {
 
 			const calculatedLevel = this.client.functions.calculateLevelFromExperience(updatedUserLevel.experience);
 
-			if (updatedUserLevel.level !== calculatedLevel) {
+			if (updatedUserLevel.level !== calculatedLevel && calculatedLevel !== 0) {
 				const [rolesAdded, rolesRemoved] = await this.client.functions.distributeLevelRoles(
 					message.member!,
 					updatedUserLevel,
@@ -84,7 +84,9 @@ export default class MessageCreate extends EventHandler {
 				this.client.logger.info(
 					`${message.author.username}#${message.author.discriminator} has leveled ${
 						updatedUserLevel.level > calculatedLevel ? "down" : "up"
-					} to level ${calculatedLevel}${rolesModified ? levelUpMessage : ""}!`,
+					} to level ${calculatedLevel} from ${updatedUserLevel.level} (${updatedUserLevel.experience} experience) ${
+						rolesModified ? levelUpMessage : ""
+					}!`,
 				);
 
 				await this.client.api.channels.createMessage(message.channel_id, {
