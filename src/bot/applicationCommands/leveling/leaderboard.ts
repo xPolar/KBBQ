@@ -103,7 +103,7 @@ export default class Leaderboard extends ApplicationCommand {
 		) {
 			const sortedUserLevels = await this.client.prisma.userLevel.findMany({
 				where: { guildId: interaction.guild_id! },
-				orderBy: { level: "desc", experience: "desc" },
+				orderBy: { level: "desc" },
 			});
 
 			this.client.submitMetric("user_levels", "set", sortedUserLevels.length, {
