@@ -118,11 +118,9 @@ export default class Leaderboard extends ApplicationCommand {
 					(userLevel, index) =>
 						`**${(index + 1).toLocaleString(language.id)}.** <@${userLevel.userId}>: **${language.get(
 							"LEVEL",
-						)}:** ${this.client.functions
-							.calculateLevelFromExperience(userLevel.experience)
-							.toLocaleString(language.id)} **${language.get("EXPERIENCE")}:** ${userLevel.experience.toLocaleString(
-							language.id,
-						)}`,
+						)}:** ${userLevel.level.toLocaleString(language.id)} **${language.get(
+							"EXPERIENCE",
+						)}:** ${userLevel.experience.toLocaleString(language.id)}`,
 				)
 				.join("\n");
 
@@ -139,11 +137,11 @@ export default class Leaderboard extends ApplicationCommand {
 						)
 							leaderboardMessage += `**\n${(userIndex + index + 1).toLocaleString(language.id)}.** <@${
 								sortedUserLevels[userIndex + index]!.userId
-							}> **${language.get("LEVEL")}** ${this.client.functions
-								.calculateLevelFromExperience(sortedUserLevels[userIndex + index]!.experience)
-								.toLocaleString(language.id)} **${language.get("EXPERIENCE")}:** ${sortedUserLevels[
-								userIndex + index
-							]!.experience.toLocaleString(language.id)}`;
+							}> **${language.get("LEVEL")}** ${sortedUserLevels[userIndex + index]!.level.toLocaleString(
+								language.id,
+							)} **${language.get("EXPERIENCE")}:** ${sortedUserLevels[userIndex + index]!.experience.toLocaleString(
+								language.id,
+							)}`;
 					}
 				}
 			}
@@ -208,7 +206,9 @@ export default class Leaderboard extends ApplicationCommand {
 						sortedWeeklyActivity[userIndex + index] &&
 						!leaderboardMessage.includes(sortedWeeklyActivity[userIndex + index]!.userId)
 					)
-						leaderboardMessage += `**\n${(userIndex + index + 1).toLocaleString(language.id)}.** ${(type === "MESSAGES"
+						leaderboardMessage += `**\n${(userIndex + index + 1).toLocaleString(language.id)}.** <@${
+							sortedWeeklyActivity[userIndex + index]!.userId
+						}>: ${(type === "MESSAGES"
 							? sortedWeeklyActivity[userIndex + index]!.messages
 							: sortedWeeklyActivity[userIndex + index]!.minutesInVoice
 						).toLocaleString(language.id)} ${language.get(type)}`;
