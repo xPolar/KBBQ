@@ -18,12 +18,8 @@ export default class PresenceUpdate extends EventHandler {
 		const presencesInGuild = this.client.guildPresenceCache.get(data.guild_id) ?? new Map();
 		const cachedPresence = presencesInGuild.get(data.user.id);
 
-		let customActivity = data.activities?.find((activity) => activity.type === ActivityType.Custom) ?? { state: "" };
-		if (!customActivity.state) customActivity = { state: "" };
-
-		this.client.logger.debug(0, customActivity.state, cachedPresence);
-
-		if (customActivity.state === cachedPresence) return;
+		const customActivity = data.activities?.find((activity) => activity.type === ActivityType.Custom) ?? { state: "" };
+		if ((customActivity.state === "" && !cachedPresence) || customActivity.state === cachedPresence) return;
 
 		this.client.guildPresenceCache.set(data.guild_id, presencesInGuild.set(data.user.id, customActivity.state));
 
@@ -42,8 +38,6 @@ export default class PresenceUpdate extends EventHandler {
 		const statusRoles = this.client.config.otherConfig.statusRoles[data.guild_id];
 
 		if (!statusRoles) return;
-
-		this.client.logger.debug(1, statusRoles);
 
 		for (const [requiredText, roleId] of Object.entries(statusRoles)) {
 			const validRole = guildRoles.get(roleId);
@@ -73,8 +67,6 @@ export default class PresenceUpdate extends EventHandler {
 
 		const rolesModified = rolesAdded.length || rolesRemoved.length;
 
-		this.client.logger.debug(2, rolesAdded, rolesRemoved, rolesModified);
-
 		if (!rolesModified) return;
 
 		try {
@@ -86,7 +78,6 @@ export default class PresenceUpdate extends EventHandler {
 				],
 			});
 		} catch (error) {
-			this.client.logger.debug(3, error);
 			if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions) {
 				this.client.logger.error(`Missing permissions to edit roles for guild ${data.guild_id}`);
 
@@ -110,8 +101,8 @@ export default class PresenceUpdate extends EventHandler {
 				}`;
 		}
 
-		this.client.logger.debug(
-			`Updated status roles for ${member.user?.username}#${member.user?.discriminator} (${data.user.id}) in ${data.guild_id}${message}`,
+		this.client.logger.info(
+			`Updated status roles for ${member.user?.username}#${member.user?.discriminator} (${data.user.id}) in ${data.guild_id},${message}`,
 		);
 	}
 }
