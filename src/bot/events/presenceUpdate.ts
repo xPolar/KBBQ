@@ -49,6 +49,8 @@ export default class PresenceUpdate extends EventHandler {
 				statusRolesMemberShouldHave.push(validRole);
 		}
 
+		this.client.logger.debug(-1, data, cachedPresence, statusRolesMemberShouldHave);
+
 		if (!statusRolesMemberShouldHave.length) return;
 
 		let member: APIGuildMember;
@@ -61,7 +63,7 @@ export default class PresenceUpdate extends EventHandler {
 			throw error;
 		}
 
-		this.client.logger.debug(3, data, statusRolesMemberShouldHave);
+		// this.client.logger.debug(3, data, statusRolesMemberShouldHave);
 
 		const rolesAdded = statusRolesMemberShouldHave.filter((role) => !member.roles.includes(role.id));
 		const rolesRemoved = validStatusRoles.filter(
