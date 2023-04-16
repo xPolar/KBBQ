@@ -15,6 +15,8 @@ export default class PresenceUpdate extends EventHandler {
 	 * https://discord.com/developers/docs/topics/gateway-events#presence-update
 	 */
 	public override async run({ data }: WithIntrinsicProps<GatewayPresenceUpdateDispatchData>) {
+		if (data.user.id !== "619284841187246090") return;
+
 		const presencesInGuild = this.client.guildPresenceCache.get(data.guild_id) ?? new Map();
 		const cachedPresence = presencesInGuild.get(data.user.id);
 
@@ -67,7 +69,7 @@ export default class PresenceUpdate extends EventHandler {
 
 		const rolesModified = rolesAdded.length || rolesRemoved.length;
 
-		this.client.logger.debug(4, data, rolesAdded, rolesRemoved, rolesModified);
+		this.client.logger.debug(4, data, rolesAdded, rolesRemoved, rolesModified, statusRolesMemberShouldHave);
 
 		if (!rolesModified) return;
 
