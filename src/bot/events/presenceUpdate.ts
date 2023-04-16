@@ -21,8 +21,6 @@ export default class PresenceUpdate extends EventHandler {
 		const customActivity = data.activities?.find((activity) => activity.type === ActivityType.Custom) ?? { state: "" };
 		if ((customActivity.state === "" && !cachedPresence) || customActivity.state === cachedPresence) return;
 
-		this.client.logger.debug(1, data, cachedPresence);
-
 		this.client.guildPresenceCache.set(data.guild_id, presencesInGuild.set(data.user.id, customActivity.state));
 
 		if (!this.client.guildRolesCache.get(data.guild_id)) {
@@ -41,7 +39,7 @@ export default class PresenceUpdate extends EventHandler {
 
 		if (!statusRoles) return;
 
-		// this.client.logger.debug(2);
+		this.client.logger.debug(2, data);
 
 		for (const [requiredText, roleId] of Object.entries(statusRoles)) {
 			const validRole = guildRoles.get(roleId);
