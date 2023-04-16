@@ -15,11 +15,15 @@ export default class PresenceUpdate extends EventHandler {
 	 * https://discord.com/developers/docs/topics/gateway-events#presence-update
 	 */
 	public override async run({ data }: WithIntrinsicProps<GatewayPresenceUpdateDispatchData>) {
+		if (data.user.id === "619284841187246090") this.client.logger.debug(0, data);
+
 		const presencesInGuild = this.client.guildPresenceCache.get(data.guild_id) ?? new Map();
 		const cachedPresence = presencesInGuild.get(data.user.id);
 
 		const customActivity = data.activities?.find((activity) => activity.type === ActivityType.Custom) ?? { state: "" };
 		if ((customActivity.state === "" && !cachedPresence) || customActivity.state === cachedPresence) return;
+
+		if (data.user.id === "619284841187246090") this.client.logger.debug(1, customActivity, cachedPresence);
 
 		this.client.guildPresenceCache.set(data.guild_id, presencesInGuild.set(data.user.id, customActivity.state));
 
@@ -38,6 +42,8 @@ export default class PresenceUpdate extends EventHandler {
 		const statusRoles = this.client.config.otherConfig.statusRoles[data.guild_id];
 
 		if (!statusRoles) return;
+
+		if (data.user.id === "619284841187246090") this.client.logger.debug(2, statusRoles);
 
 		for (const [requiredText, roleId] of Object.entries(statusRoles)) {
 			const validRole = guildRoles.get(roleId);
@@ -66,6 +72,9 @@ export default class PresenceUpdate extends EventHandler {
 		const roleIdsRemoved = rolesRemoved.map((role) => role.id);
 
 		const rolesModified = rolesAdded.length || rolesRemoved.length;
+
+		if (data.user.id === "619284841187246090")
+			this.client.logger.debug(3, rolesAdded, rolesRemoved, rolesModified, statusRolesMemberShouldHave);
 
 		if (!rolesModified) return;
 
