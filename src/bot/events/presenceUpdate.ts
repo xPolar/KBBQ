@@ -18,12 +18,10 @@ export default class PresenceUpdate extends EventHandler {
 		const presencesInGuild = this.client.guildPresenceCache.get(data.guild_id) ?? new Map();
 		const cachedPresence = presencesInGuild.get(data.user.id);
 
-		this.client.logger.debug(0, data);
-
 		const customActivity = data.activities?.find((activity) => activity.type === ActivityType.Custom) ?? { state: "" };
 		if ((customActivity.state === "" && !cachedPresence) || customActivity.state === cachedPresence) return;
 
-		this.client.logger.debug(1, data);
+		this.client.logger.debug(1, data, cachedPresence);
 
 		this.client.guildPresenceCache.set(data.guild_id, presencesInGuild.set(data.user.id, customActivity.state));
 
@@ -43,7 +41,7 @@ export default class PresenceUpdate extends EventHandler {
 
 		if (!statusRoles) return;
 
-		this.client.logger.debug(2);
+		// this.client.logger.debug(2);
 
 		for (const [requiredText, roleId] of Object.entries(statusRoles)) {
 			const validRole = guildRoles.get(roleId);
@@ -65,7 +63,7 @@ export default class PresenceUpdate extends EventHandler {
 			throw error;
 		}
 
-		this.client.logger.debug(3, data);
+		// this.client.logger.debug(3, data);
 
 		const rolesAdded = statusRolesMemberShouldHave.filter((role) => !member.roles.includes(role.id));
 		const rolesRemoved = validStatusRoles.filter(
@@ -77,7 +75,7 @@ export default class PresenceUpdate extends EventHandler {
 
 		if (!rolesModified) return;
 
-		this.client.logger.debug(4, data);
+		// this.client.logger.debug(4, data);
 
 		try {
 			await this.client.api.guilds.editMember(data.guild_id, data.user.id, {
