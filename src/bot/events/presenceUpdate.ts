@@ -16,6 +16,7 @@ export default class PresenceUpdate extends EventHandler {
 	 */
 	public override async run({ data }: WithIntrinsicProps<GatewayPresenceUpdateDispatchData>) {
 		const statusRoles = this.client.config.otherConfig.statusRoles[data.guild_id];
+		this.client.logger.debug(0, statusRoles);
 
 		if (!statusRoles) return;
 
@@ -26,6 +27,7 @@ export default class PresenceUpdate extends EventHandler {
 		try {
 			member = await this.client.api.guilds.getMember(data.guild_id, data.user.id);
 		} catch (error) {
+			this.client.logger.debug(1, "error");
 			if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember) return;
 
 			throw error;
@@ -41,6 +43,8 @@ export default class PresenceUpdate extends EventHandler {
 		}
 
 		const newRoles = member.roles.filter((role) => !statusRoleIds.includes(role)).concat(rolesToBeAdded);
+
+		this.client.logger.debug(2, newRoles, rolesToBeAdded);
 
 		if (newRoles === member.roles) return;
 
