@@ -67,7 +67,9 @@ export default class PresenceUpdate extends EventHandler {
 		);
 		const roleIdsRemoved = rolesRemoved.map((role) => role.id);
 
-		if (!rolesRemoved.length && !rolesAdded.length) return;
+		const rolesModified = rolesAdded.length || rolesRemoved.length;
+
+		if (!rolesModified) return;
 
 		try {
 			await this.client.api.guilds.editMember(data.guild_id, data.user.id, {
@@ -87,12 +89,22 @@ export default class PresenceUpdate extends EventHandler {
 			throw error;
 		}
 
+		let message = ``;
+
+		if (rolesModified) {
+			if (rolesAdded.length)
+				message += ` added the ${rolesAdded.map((role) => role.name).join(", ")} role${
+					rolesAdded.length > 1 ? "s" : ""
+				}`;
+			if (rolesAdded.length && rolesRemoved.length) message += " and";
+			if (rolesRemoved.length)
+				message += ` removed the ${rolesRemoved.map((role) => role.name).join(", ")} role${
+					rolesRemoved.length > 1 ? "s" : ""
+				}`;
+		}
+
 		this.client.logger.debug(
-			`Updated status roles for ${member.user?.username}#${member.user?.discriminator} (${
-				data.user.id
-			}), added ${rolesAdded.map((role) => role.name).join(", ")} and removed ${rolesRemoved
-				.map((role) => role.name)
-				.join(", ")}.`,
+			`Updated status roles for ${member.user?.username}#${member.user?.discriminator} (${data.user.id}) in ${data.guild_id}${message}`,
 		);
 	}
 }
