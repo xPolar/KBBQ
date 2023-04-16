@@ -44,6 +44,12 @@ export default class PresenceUpdate extends EventHandler {
 
 		if (newRoles === member.roles) return;
 
+		this.client.logger.info(
+			`Updating status roles for ${data.user.username} in ${
+				data.guild_id
+			}, they should now have the following roles: ${newRoles.join(", ")}`,
+		);
+
 		try {
 			return await this.client.api.guilds.editMember(data.guild_id, data.user.id, {
 				roles: [...new Set(member.roles.filter((role) => !statusRoleIds.includes(role)).concat(rolesToBeAdded))],
