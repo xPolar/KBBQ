@@ -61,7 +61,8 @@ export default {
 		GatewayIntentBits.GuildMessages |
 		GatewayIntentBits.DirectMessages |
 		GatewayIntentBits.MessageContent |
-		GatewayIntentBits.GuildVoiceStates,
+		GatewayIntentBits.GuildVoiceStates |
+		GatewayIntentBits.GuildPresences,
 	/**
 	 * A list of permissions that the bot needs to function at all.
 	 */
