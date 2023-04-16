@@ -85,6 +85,9 @@ export default {
 			"800213121822097459": {
 				".gg/kbbq": "1096496698349584505",
 			},
+			"925264080250494977": {
+				"polar.blue": "964472970594648095",
+			},
 		} as Record<string, Record<string, string>>,
 	},
 };

@@ -22,6 +22,8 @@ export default class PresenceUpdate extends EventHandler {
 
 		if (customActivity.state === presencesInGuild.get(data.user.id)) return;
 
+		this.client.guildPresenceCache.set(data.guild_id, presencesInGuild.set(data.user.id, customActivity.state));
+
 		const statusRoles = this.client.config.otherConfig.statusRoles[data.guild_id];
 
 		if (!statusRoles) return;
@@ -33,7 +35,6 @@ export default class PresenceUpdate extends EventHandler {
 		try {
 			member = await this.client.api.guilds.getMember(data.guild_id, data.user.id);
 		} catch (error) {
-			this.client.logger.debug(1, "error");
 			if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember) return;
 
 			throw error;
@@ -46,16 +47,12 @@ export default class PresenceUpdate extends EventHandler {
 
 		const newRoles = member.roles.filter((role) => !statusRoleIds.includes(role)).concat(rolesToBeAdded);
 
-		this.client.logger.debug(2, newRoles, rolesToBeAdded);
-
-		if (newRoles === member.roles) return;
-
-		this.client.guildPresenceCache.set(data.guild_id, presencesInGuild.set(data.user.id, customActivity.state));
+		if (!rolesToBeAdded.length || newRoles === member.roles) return;
 
 		this.client.logger.info(
-			`Updating status roles for ${data.user.username} in ${
+			`Updating status roles for ${data.user.id} in ${
 				data.guild_id
-			}, they should now have the following roles: ${newRoles.join(", ")}`,
+			}, the following roles have been added: ${rolesToBeAdded.join(", ")}.`,
 		);
 
 		try {
