@@ -67,6 +67,8 @@ export default class PresenceUpdate extends EventHandler {
 		);
 		const roleIdsRemoved = rolesRemoved.map((role) => role.id);
 
+		if (!rolesRemoved.length && !rolesAdded.length) return;
+
 		try {
 			await this.client.api.guilds.editMember(data.guild_id, data.user.id, {
 				roles: [
