@@ -56,10 +56,6 @@ export default class PresenceUpdate extends EventHandler {
 			);
 		}
 
-		if (!statusRolesMemberShouldHave.length) return;
-
-		// this.client.logger.debug(-1, data, cachedPresence, statusRolesMemberShouldHave);
-
 		let member: APIGuildMember;
 
 		try {
@@ -70,8 +66,6 @@ export default class PresenceUpdate extends EventHandler {
 			throw error;
 		}
 
-		// this.client.logger.debug(3, data, statusRolesMemberShouldHave);
-
 		const rolesAdded = statusRolesMemberShouldHave.filter((role) => !member.roles.includes(role.id));
 		const rolesRemoved = validStatusRoles.filter(
 			(role) => !statusRolesMemberShouldHave.includes(role) && member.roles.includes(role.id),
@@ -79,6 +73,8 @@ export default class PresenceUpdate extends EventHandler {
 		const roleIdsRemoved = rolesRemoved.map((role) => role.id);
 
 		const rolesModified = rolesAdded.length || rolesRemoved.length;
+
+		this.client.logger.debug(4, data, rolesAdded, rolesRemoved, rolesModified);
 
 		if (!rolesModified) return;
 
