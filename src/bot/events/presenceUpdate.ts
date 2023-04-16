@@ -45,10 +45,15 @@ export default class PresenceUpdate extends EventHandler {
 
 			validStatusRoles.push(validRole);
 
-			this.client.logger.debug(-2, requiredText, customActivity.state);
-
 			if (customActivity.state?.toLowerCase().includes(requiredText.toLowerCase()))
 				statusRolesMemberShouldHave.push(validRole);
+
+			this.client.logger.debug(
+				-2,
+				requiredText,
+				customActivity.state,
+				customActivity.state?.toLowerCase().includes(requiredText.toLowerCase()),
+			);
 		}
 
 		if (!statusRolesMemberShouldHave.length) return;
