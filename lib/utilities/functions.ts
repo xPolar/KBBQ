@@ -1,12 +1,19 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync } from "node:fs";
-import type { APIGuildMember, APIUser, APIRole, APIInteractionDataResolvedGuildMember } from "@discordjs/core";
+import {
+	APIGuildMember,
+	APIUser,
+	APIRole,
+	APIInteractionDataResolvedGuildMember,
+	RESTJSONErrorCodes,
+} from "@discordjs/core";
 import type { UserLevel } from "@prisma/client";
 import canvas from "canvas";
 import Config from "../../config/bot.config.js";
 import type Language from "../classes/Language.js";
 import Logger from "../classes/Logger.js";
 import type ExtendedClient from "../extensions/ExtendedClient.js";
+import { DiscordAPIError } from "@discordjs/rest";
 
 export default class Functions {
 	/**
@@ -443,9 +450,6 @@ export default class Functions {
 	 * @returns What roles have been added and or taken from the user in the format of [listOfAddedRoleIds, listOfRemovedRoleIds].
 	 */
 	public async distributeLevelRoles(member: APIGuildMember, userLevel: UserLevel) {
-		const validLevelRoles: APIRole[] = [];
-		const levelRolesMemberShouldHave: APIRole[] = [];
-
 		if (!this.client.guildRolesCache.get(userLevel.guildId)) {
 			const guildRoles = new Map();
 
@@ -455,19 +459,22 @@ export default class Functions {
 			this.client.guildRolesCache.set(userLevel.guildId, guildRoles);
 		}
 
+		const validLevelRoles: APIRole[] = [];
+		const levelRolesMemberShouldHave: APIRole[] = [];
 		const guildRoles = this.client.guildRolesCache.get(userLevel.guildId)!;
+		const levelRoles = this.client.config.otherConfig.levelRoles[userLevel.guildId];
 
 		const currentLevel = this.client.functions.calculateLevelFromExperience(userLevel.experience);
 
-		if (!this.client.config.otherConfig.levelRoles[userLevel.guildId]) return [[], []];
+		if (!levelRoles) return [[], []];
 
-		for (const [key, value] of Object.entries(this.client.config.otherConfig.levelRoles[userLevel.guildId]!)) {
-			const validRole = guildRoles.get(value);
+		for (const [requiredLevel, roleId] of Object.entries(levelRoles)) {
+			const validRole = guildRoles.get(roleId);
 			if (!validRole) continue;
 
 			validLevelRoles.push(validRole);
 
-			if (currentLevel >= Number(key)) levelRolesMemberShouldHave.push(validRole);
+			if (currentLevel >= Number(requiredLevel)) levelRolesMemberShouldHave.push(validRole);
 		}
 
 		const rolesAdded = levelRolesMemberShouldHave.filter((role) => !member.roles.includes(role.id));
@@ -476,13 +483,23 @@ export default class Functions {
 		);
 		const roleIdsRemoved = rolesRemoved.map((role) => role.id);
 
-		await this.client.api.guilds.editMember(userLevel.guildId, userLevel.userId, {
-			roles: [
-				...new Set(
-					member.roles.filter((role) => !roleIdsRemoved.includes(role)).concat(rolesAdded.map((role) => role.id)),
-				),
-			],
-		});
+		try {
+			await this.client.api.guilds.editMember(userLevel.guildId, userLevel.userId, {
+				roles: [
+					...new Set(
+						member.roles.filter((role) => !roleIdsRemoved.includes(role)).concat(rolesAdded.map((role) => role.id)),
+					),
+				],
+			});
+		} catch (error) {
+			if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions) {
+				this.client.logger.error(`Missing permissions to edit roles for guild ${userLevel.guildId}`);
+
+				return [[], []];
+			}
+
+			throw error;
+		}
 
 		return [rolesAdded, rolesRemoved] as const;
 	}
