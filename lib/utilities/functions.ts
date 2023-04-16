@@ -412,7 +412,7 @@ export default class Functions {
 					? member?.avatar
 						? `guilds/${userLevel.guildId}/users/${user.id}/avatars/${member.avatar}.png`
 						: `avatars/${user.id}/${user.avatar}.png`
-					: `embed/avatars/${user.discriminator}.png`
+					: `embed/avatars/${Number.parseInt(user.discriminator, 10) % 6}.png`
 			}`,
 		);
 		context.drawImage(avatar, 16, 16, 120, 120);
@@ -459,7 +459,9 @@ export default class Functions {
 
 		const currentLevel = this.client.functions.calculateLevelFromExperience(userLevel.experience);
 
-		for (const [key, value] of Object.entries(this.client.config.otherConfig.levelRoles)) {
+		if (!this.client.config.otherConfig.levelRoles[userLevel.guildId]) return [[], []];
+
+		for (const [key, value] of Object.entries(this.client.config.otherConfig.levelRoles[userLevel.guildId]!)) {
 			const validRole = guildRoles.get(value);
 			if (!validRole) continue;
 
