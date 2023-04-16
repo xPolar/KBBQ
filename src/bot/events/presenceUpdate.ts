@@ -47,13 +47,6 @@ export default class PresenceUpdate extends EventHandler {
 
 			if (customActivity.state?.toLowerCase().includes(requiredText.toLowerCase()))
 				statusRolesMemberShouldHave.push(validRole);
-
-			this.client.logger.debug(
-				-2,
-				requiredText,
-				customActivity.state,
-				customActivity.state?.toLowerCase().includes(requiredText.toLowerCase()),
-			);
 		}
 
 		let member: APIGuildMember;
