@@ -15,8 +15,14 @@ export default class PresenceUpdate extends EventHandler {
 	 * https://discord.com/developers/docs/topics/gateway-events#presence-update
 	 */
 	public override async run({ data }: WithIntrinsicProps<GatewayPresenceUpdateDispatchData>) {
+		const customActivity = data.activities?.find((activity) => activity.type === ActivityType.Custom);
+		if (!customActivity) return;
+
+		const presencesInGuild = this.client.guildPresenceCache.get(data.guild_id) ?? new Map();
+
+		if (customActivity.state === presencesInGuild.get(data.user.id)) return;
+
 		const statusRoles = this.client.config.otherConfig.statusRoles[data.guild_id];
-		this.client.logger.debug(0, statusRoles);
 
 		if (!statusRoles) return;
 
@@ -35,18 +41,16 @@ export default class PresenceUpdate extends EventHandler {
 
 		const rolesToBeAdded = [];
 
-		for (const activity of data.activities ?? []) {
-			if (activity.type !== ActivityType.Custom) continue;
-
-			for (const [requiredText, roleId] of Object.entries(statusRoles))
-				if (activity.state?.includes(requiredText)) rolesToBeAdded.push(roleId);
-		}
+		for (const [requiredText, roleId] of Object.entries(statusRoles))
+			if (customActivity.state?.includes(requiredText)) rolesToBeAdded.push(roleId);
 
 		const newRoles = member.roles.filter((role) => !statusRoleIds.includes(role)).concat(rolesToBeAdded);
 
 		this.client.logger.debug(2, newRoles, rolesToBeAdded);
 
 		if (newRoles === member.roles) return;
+
+		this.client.guildPresenceCache.set(data.guild_id, presencesInGuild.set(data.user.id, customActivity.state));
 
 		this.client.logger.info(
 			`Updating status roles for ${data.user.username} in ${

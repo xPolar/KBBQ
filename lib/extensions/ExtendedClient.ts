@@ -90,6 +90,11 @@ export default class ExtendedClient extends Client {
 	public guildRolesCache: Map<string, Map<string, APIRole>>;
 
 	/**
+	 * Guild presence cache, representing a guild, and the presence of each user in the guild.
+	 */
+	public guildPresenceCache: Map<string, Map<string, string>>;
+
+	/**
 	 * An approximation of how many users the bot can see.
 	 */
 	public approximateUserCount: number;
@@ -182,6 +187,7 @@ export default class ExtendedClient extends Client {
 
 		this.guildOwnersCache = new Map();
 		this.guildRolesCache = new Map();
+		this.guildPresenceCache = new Map();
 
 		this.approximateUserCount = 0;
 
