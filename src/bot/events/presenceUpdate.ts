@@ -47,6 +47,10 @@ export default class PresenceUpdate extends EventHandler {
 				throw error;
 			}
 
+			const newRoles = member.roles.filter((roleId) => !validStatusRoleIds.has(roleId));
+
+			if (newRoles.length === member.roles.length) return;
+
 			try {
 				await this.client.api.guilds.editMember(data.guild_id, data.user.id, {
 					roles: member.roles.filter((roleId) => !validStatusRoleIds.has(roleId)),
