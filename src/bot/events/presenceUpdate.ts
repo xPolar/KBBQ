@@ -69,10 +69,15 @@ export default class PresenceUpdate extends EventHandler {
 
 		if (!customActivity?.state) return;
 
+		cachedPresencesInGuild.set(data.user.id, customActivity.state);
+		this.client.guildPresenceCache.set(data.guild_id, cachedPresencesInGuild);
+
 		const rolesInGuild = this.client.guildRolesCache.get(data.guild_id) ?? new Map<string, APIRole>();
 
 		const validStatusRoleIds = new Set<string>();
 		const rolesIdsToAdd = new Set<string>();
+
+		let removeOldRoles = false;
 
 		for (const [requiredText, statusRoleId] of Object.entries(
 			this.client.config.otherConfig.statusRoles[data.guild_id] ?? {},
@@ -83,9 +88,12 @@ export default class PresenceUpdate extends EventHandler {
 			validStatusRoleIds.add(validRole.id);
 
 			if (customActivity.state.toLowerCase().includes(requiredText.toLowerCase())) rolesIdsToAdd.add(validRole.id);
+
+			if (!removeOldRoles && cachedUserPresence?.toLowerCase().includes(requiredText.toLowerCase()))
+				removeOldRoles = true;
 		}
 
-		if (!validStatusRoleIds.size || !rolesIdsToAdd.size) return;
+		if (!validStatusRoleIds.size || (!rolesIdsToAdd.size && !removeOldRoles)) return;
 
 		let member: APIGuildMember;
 
