@@ -76,6 +76,8 @@ export default class PresenceUpdate extends EventHandler {
 		cachedPresencesInGuild.set(data.user.id, customActivity.state);
 		this.client.guildPresenceCache.set(data.guild_id, cachedPresencesInGuild);
 
+		if (cachedUserPresence === customActivity.state) return;
+
 		const rolesInGuild = this.client.guildRolesCache.get(data.guild_id) ?? new Map<string, APIRole>();
 
 		const validStatusRoleIds = new Set<string>();
