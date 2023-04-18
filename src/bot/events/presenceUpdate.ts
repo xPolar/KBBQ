@@ -117,7 +117,9 @@ export default class PresenceUpdate extends EventHandler {
 			this.client.logger.debug(
 				`User ${data.user.id} updated their status, it is now ${
 					customActivity.state
-				}, the following roles have been added: ${[...rolesIdsToAdd].map((roleId) => roleId)}.`,
+				}, I have removed all status roles from them${
+					rolesIdsToAdd.size ? `, then I added the following roles: ${[...rolesIdsToAdd].map((roleId) => roleId)}` : `.`
+				}`,
 			);
 
 			return;
