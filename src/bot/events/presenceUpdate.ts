@@ -85,7 +85,7 @@ export default class PresenceUpdate extends EventHandler {
 			if (customActivity.state.toLowerCase().includes(requiredText.toLowerCase())) rolesIdsToAdd.add(validRole.id);
 		}
 
-		if (!validStatusRoleIds.size) return;
+		if (!validStatusRoleIds.size || !rolesIdsToAdd.size) return;
 
 		let member: APIGuildMember;
 
