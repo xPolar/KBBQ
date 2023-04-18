@@ -1,13 +1,6 @@
-import type {
-	//  APIGuildMember, APIRole,
-	GatewayPresenceUpdateDispatchData,
-	WithIntrinsicProps,
-} from "@discordjs/core";
-import {
-	//  RESTJSONErrorCodes, ActivityType,
-	GatewayDispatchEvents,
-} from "@discordjs/core";
-// import { DiscordAPIError } from "@discordjs/rest";
+import type { APIGuildMember, APIRole, GatewayPresenceUpdateDispatchData, WithIntrinsicProps } from "@discordjs/core";
+import { RESTJSONErrorCodes, ActivityType, GatewayDispatchEvents } from "@discordjs/core";
+import { DiscordAPIError } from "@discordjs/rest";
 import EventHandler from "../../../lib/classes/EventHandler.js";
 import type ExtendedClient from "../../../lib/extensions/ExtendedClient.js";
 
@@ -21,78 +14,108 @@ export default class PresenceUpdate extends EventHandler {
 	 *
 	 * https://discord.com/developers/docs/topics/gateway-events#presence-update
 	 */
-	public override async run({ data: _data }: WithIntrinsicProps<GatewayPresenceUpdateDispatchData>) {
-		// if (data.user.id === "619284841187246090") this.client.logger.debug(0, data);
-		// const presencesInGuild = this.client.guildPresenceCache.get(data.guild_id) ?? new Map();
-		// const cachedPresence = presencesInGuild.get(data.user.id);
-		// const customActivity = data.activities?.find((activity) => activity.type === ActivityType.Custom) ?? { state: "" };
-		// if ((customActivity.state === "" && !cachedPresence) || customActivity.state === cachedPresence) return;
-		// if (data.user.id === "619284841187246090") this.client.logger.debug(1, customActivity, cachedPresence);
-		// this.client.guildPresenceCache.set(data.guild_id, presencesInGuild.set(data.user.id, customActivity.state));
-		// if (!this.client.guildRolesCache.get(data.guild_id)) {
-		// 	const guildRoles = new Map();
-		// 	for (const guildRole of await this.client.api.guilds.getRoles(data.guild_id))
-		// 		guildRoles.set(guildRole.id, guildRole);
-		// 	this.client.guildRolesCache.set(data.guild_id, guildRoles);
-		// }
-		// const validStatusRoles: APIRole[] = [];
-		// const statusRolesMemberShouldHave: APIRole[] = [];
-		// const guildRoles = this.client.guildRolesCache.get(data.guild_id)!;
-		// const statusRoles = this.client.config.otherConfig.statusRoles[data.guild_id];
-		// if (!statusRoles) return;
-		// if (data.user.id === "619284841187246090") this.client.logger.debug(2, statusRoles);
-		// for (const [requiredText, roleId] of Object.entries(statusRoles)) {
-		// 	const validRole = guildRoles.get(roleId);
-		// 	if (!validRole) continue;
-		// 	validStatusRoles.push(validRole);
-		// 	if (customActivity.state?.toLowerCase().includes(requiredText.toLowerCase()))
-		// 		statusRolesMemberShouldHave.push(validRole);
-		// }
-		// let member: APIGuildMember;
-		// try {
-		// 	member = await this.client.api.guilds.getMember(data.guild_id, data.user.id);
-		// } catch (error) {
-		// 	if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember) return;
-		// 	throw error;
-		// }
-		// const rolesAdded = statusRolesMemberShouldHave.filter((role) => !member.roles.includes(role.id));
-		// const rolesRemoved = validStatusRoles.filter(
-		// 	(role) => !statusRolesMemberShouldHave.includes(role) && member.roles.includes(role.id),
-		// );
-		// const roleIdsRemoved = rolesRemoved.map((role) => role.id);
-		// const rolesModified = rolesAdded.length || rolesRemoved.length;
-		// if (data.user.id === "619284841187246090")
-		// 	this.client.logger.debug(3, rolesAdded, rolesRemoved, rolesModified, statusRolesMemberShouldHave);
-		// if (!rolesModified) return;
-		// try {
-		// 	await this.client.api.guilds.editMember(data.guild_id, data.user.id, {
-		// 		roles: [
-		// 			...new Set(
-		// 				member.roles.filter((role) => !roleIdsRemoved.includes(role)).concat(rolesAdded.map((role) => role.id)),
-		// 			),
-		// 		],
-		// 	});
-		// } catch (error) {
-		// 	if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions) {
-		// 		this.client.logger.error(`Missing permissions to edit roles for guild ${data.guild_id}`);
-		// 		return;
-		// 	}
-		// 	throw error;
-		// }
-		// let message = ``;
-		// if (rolesModified) {
-		// 	if (rolesAdded.length)
-		// 		message += ` added the ${rolesAdded.map((role) => role.name).join(", ")} role${
-		// 			rolesAdded.length > 1 ? "s" : ""
-		// 		}`;
-		// 	if (rolesAdded.length && rolesRemoved.length) message += " and";
-		// 	if (rolesRemoved.length)
-		// 		message += ` removed the ${rolesRemoved.map((role) => role.name).join(", ")} role${
-		// 			rolesRemoved.length > 1 ? "s" : ""
-		// 		}`;
-		// }
-		// this.client.logger.info(
-		// 	`Updated status roles for ${member.user?.username}#${member.user?.discriminator} (${data.user.id}) in ${data.guild_id},${message}`,
-		// );
+	public override async run({ data }: WithIntrinsicProps<GatewayPresenceUpdateDispatchData>) {
+		const cachedPresencesInGuild = this.client.guildPresenceCache.get(data.guild_id) ?? new Map<string, string>();
+		const cachedUserPresence = cachedPresencesInGuild.get(data.user.id);
+
+		const customActivity = data.activities?.find((activity) => activity.type === ActivityType.Custom);
+
+		if (cachedUserPresence && !customActivity) {
+			cachedPresencesInGuild.delete(data.user.id);
+			this.client.guildPresenceCache.set(data.guild_id, cachedPresencesInGuild);
+
+			const rolesInGuild = this.client.guildRolesCache.get(data.guild_id) ?? new Map<string, APIRole>();
+
+			const validStatusRoleIds = new Set<string>();
+
+			for (const statusRoleId of Object.values(this.client.config.otherConfig.statusRoles[data.guild_id] ?? {})) {
+				const validRole = rolesInGuild.get(statusRoleId);
+				if (!validRole) continue;
+
+				validStatusRoleIds.add(validRole.id);
+			}
+
+			if (!validStatusRoleIds.size) return;
+
+			let member: APIGuildMember;
+
+			try {
+				member = await this.client.api.guilds.getMember(data.guild_id, data.user.id);
+			} catch (error) {
+				if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember) return;
+
+				throw error;
+			}
+
+			try {
+				await this.client.api.guilds.editMember(data.guild_id, data.user.id, {
+					roles: member.roles.filter((roleId) => !validStatusRoleIds.has(roleId)),
+				});
+
+				this.client.logger.debug(
+					`User ${data.user.id} cleared their status, their status was previously ${cachedUserPresence}.`,
+				);
+
+				return;
+			} catch (error) {
+				if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions) {
+					this.client.logger.error(`Missing permissions to edit roles for guild ${data.guild_id}`);
+					return;
+				}
+
+				throw error;
+			}
+		}
+
+		if (!customActivity?.state) return;
+
+		const rolesInGuild = this.client.guildRolesCache.get(data.guild_id) ?? new Map<string, APIRole>();
+
+		const validStatusRoleIds = new Set<string>();
+		const rolesIdsToAdd = new Set<string>();
+
+		for (const [requiredText, statusRoleId] of Object.entries(
+			this.client.config.otherConfig.statusRoles[data.guild_id] ?? {},
+		)) {
+			const validRole = rolesInGuild.get(statusRoleId);
+			if (!validRole) continue;
+
+			validStatusRoleIds.add(validRole.id);
+
+			if (customActivity.state.toLowerCase().includes(requiredText.toLowerCase())) rolesIdsToAdd.add(validRole.id);
+		}
+
+		if (!validStatusRoleIds.size) return;
+
+		let member: APIGuildMember;
+
+		try {
+			member = await this.client.api.guilds.getMember(data.guild_id, data.user.id);
+		} catch (error) {
+			if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember) return;
+
+			throw error;
+		}
+
+		try {
+			await this.client.api.guilds.editMember(data.guild_id, data.user.id, {
+				roles: member.roles.filter((roleId) => !validStatusRoleIds.has(roleId)).concat([...rolesIdsToAdd]),
+			});
+
+			this.client.logger.debug(
+				`User ${data.user.id} updated their status, it is now ${
+					customActivity.state
+				}, the following roles have been added: ${[...rolesIdsToAdd].map((roleId) => roleId)}.`,
+			);
+
+			return;
+		} catch (error) {
+			if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions) {
+				this.client.logger.error(`Missing permissions to edit roles for guild ${data.guild_id}`);
+				return;
+			}
+
+			throw error;
+		}
 	}
 }
