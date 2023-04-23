@@ -255,6 +255,7 @@ export default class ExtendedClient extends Client {
 			lng: "en-US",
 		});
 		await this.languageHandler.loadLanguages();
+		await this.autoCompleteHandler.loadAutoCompletes();
 		await this.applicationCommandHandler.loadApplicationCommands();
 		await this.textCommandHandler.loadTextCommands();
 

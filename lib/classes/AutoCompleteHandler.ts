@@ -3,7 +3,7 @@ import type {
 	APIInteractionDataResolved,
 	WithIntrinsicProps,
 } from "@discordjs/core";
-import { ApplicationCommandOptionType, ApplicationCommandType } from "@discordjs/core";
+import { ApplicationCommandOptionType } from "@discordjs/core";
 import type { APIInteractionWithArguments, InteractionArguments } from "../../typings";
 import type ExtendedClient from "../extensions/ExtendedClient";
 import applicationCommandOptionTypeReference from "../utilities/reference.js";
@@ -75,7 +75,7 @@ export default class AutoCompleteHandler {
 		data: interaction,
 		shardId,
 	}: Omit<WithIntrinsicProps<APIApplicationCommandAutocompleteInteraction>, "api">) {
-		const name = [];
+		const name = [interaction.data.name];
 
 		const applicationCommandArguments = {
 			attachments: {},
@@ -89,44 +89,42 @@ export default class AutoCompleteHandler {
 			users: {},
 		} as InteractionArguments;
 
-		if (interaction.data.type === ApplicationCommandType.ChatInput) {
-			let parentOptions = interaction.data.options ?? [];
+		let parentOptions = interaction.data.options ?? [];
 
-			while (parentOptions.length) {
-				const currentOption = parentOptions.pop();
+		while (parentOptions.length) {
+			const currentOption = parentOptions.pop();
 
-				if (!currentOption) continue;
+			if (!currentOption) continue;
 
-				if (currentOption.type === ApplicationCommandOptionType.SubcommandGroup) {
-					name.push(currentOption.name);
-					applicationCommandArguments.subCommandGroup = currentOption;
-					parentOptions = currentOption.options;
-				} else if (currentOption.type === ApplicationCommandOptionType.Subcommand) {
-					name.push(currentOption.name);
-					applicationCommandArguments.subCommand = currentOption;
-					parentOptions = currentOption.options ?? [];
-				} else {
-					const identifier = applicationCommandOptionTypeReference[currentOption.type] as keyof Omit<
-						InteractionArguments,
-						"subCommand" | "subCommandGroup"
-					>;
+			if (currentOption.type === ApplicationCommandOptionType.SubcommandGroup) {
+				name.push(currentOption.name);
+				applicationCommandArguments.subCommandGroup = currentOption;
+				parentOptions = currentOption.options;
+			} else if (currentOption.type === ApplicationCommandOptionType.Subcommand) {
+				name.push(currentOption.name);
+				applicationCommandArguments.subCommand = currentOption;
+				parentOptions = currentOption.options ?? [];
+			} else {
+				const identifier = applicationCommandOptionTypeReference[currentOption.type] as keyof Omit<
+					InteractionArguments,
+					"subCommand" | "subCommandGroup"
+				>;
 
-					if (
-						interaction.data.resolved &&
-						identifier in interaction.data.resolved &&
-						currentOption.name in interaction.data.resolved[identifier as keyof APIInteractionDataResolved]!
-					) {
-						applicationCommandArguments[identifier]![currentOption.name] = interaction.data.resolved[
-							identifier as keyof APIInteractionDataResolved
-						]![currentOption.name] as any;
-						continue;
-					}
-
-					applicationCommandArguments[identifier]![currentOption.name] = currentOption as any;
-
-					if ((applicationCommandArguments[identifier]![currentOption.name] as any).focused)
-						name.push(currentOption.name);
+				if (
+					interaction.data.resolved &&
+					identifier in interaction.data.resolved &&
+					currentOption.name in interaction.data.resolved[identifier as keyof APIInteractionDataResolved]!
+				) {
+					applicationCommandArguments[identifier]![currentOption.name] = interaction.data.resolved[
+						identifier as keyof APIInteractionDataResolved
+					]![currentOption.name] as any;
+					continue;
 				}
+
+				applicationCommandArguments[identifier]![currentOption.name] = currentOption as any;
+
+				if ((applicationCommandArguments[identifier]![currentOption.name] as any).focused)
+					name.push(currentOption.name);
 			}
 		}
 
