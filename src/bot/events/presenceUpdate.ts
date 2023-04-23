@@ -177,7 +177,7 @@ export default class PresenceUpdate extends EventHandler {
 
 		if (
 			!messagesToSend ||
-			(member.roles.length === newMember.roles.length &&
+			(memberRoles.length === newMemberRoles.length &&
 				memberRoles.every((role, index) => role === newMemberRoles[index]))
 		)
 			return;
@@ -186,10 +186,10 @@ export default class PresenceUpdate extends EventHandler {
 			Object.entries(messagesToSend).flatMap(([channelId, messagePayloads]) => {
 				return messagePayloads.map(async (messagePayload) => {
 					try {
-						await this.client.api.channels.createMessage(
-							channelId,
-							JSON.parse(JSON.stringify(messagePayload).replaceAll("{{user}}", `<@${data.user.id}>`)),
-						);
+						await this.client.api.channels.createMessage(channelId, {
+							...JSON.parse(JSON.stringify(messagePayload).replaceAll("{{user}}", `<@${data.user.id}>`)),
+							allowed_mentions: { parse: [], users: [data.user.id] },
+						});
 					} catch (error) {
 						if (error instanceof DiscordAPIError) {
 							if (error.code === RESTJSONErrorCodes.MissingPermissions) {
