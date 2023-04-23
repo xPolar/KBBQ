@@ -1,19 +1,14 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync } from "node:fs";
-import {
-	APIGuildMember,
-	APIUser,
-	APIRole,
-	APIInteractionDataResolvedGuildMember,
-	RESTJSONErrorCodes,
-} from "@discordjs/core";
+import type { APIGuildMember, APIUser, APIRole, APIInteractionDataResolvedGuildMember } from "@discordjs/core";
+import { RESTJSONErrorCodes } from "@discordjs/core";
+import { DiscordAPIError } from "@discordjs/rest";
 import type { UserLevel } from "@prisma/client";
 import canvas from "canvas";
 import Config from "../../config/bot.config.js";
 import type Language from "../classes/Language.js";
 import Logger from "../classes/Logger.js";
 import type ExtendedClient from "../extensions/ExtendedClient.js";
-import { DiscordAPIError } from "@discordjs/rest";
 
 export default class Functions {
 	/**

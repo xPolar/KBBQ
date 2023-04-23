@@ -64,9 +64,14 @@ model Embed {
     @@map("embeds")
 }
 
-model StatusLogChannel {
-    guildId   String @id
-    channelId String
+model StatusRole {
+    id           String  @id @default(cuid())
+    guildId      String
+    requiredText String
+    roleId       String
+    channelId    String?
+    embedName    String?
 
-    @@map("status_log_channels")
+    @@unique([guildId, roleId, requiredText])
+    @@map("status_roles")
 }

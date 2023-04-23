@@ -1,4 +1,10 @@
-import type { APIGuildMember, APIRole, GatewayPresenceUpdateDispatchData, WithIntrinsicProps } from "@discordjs/core";
+import type {
+	APIGuildMember,
+	APIRole,
+	GatewayPresenceUpdateDispatchData,
+	WithIntrinsicProps,
+	RESTPostAPIChannelMessageJSONBody,
+} from "@discordjs/core";
 import { RESTJSONErrorCodes, ActivityType, GatewayDispatchEvents } from "@discordjs/core";
 import { DiscordAPIError } from "@discordjs/rest";
 import EventHandler from "../../../lib/classes/EventHandler.js";
@@ -20,7 +26,7 @@ export default class PresenceUpdate extends EventHandler {
 
 		const customActivity = data.activities?.find((activity) => activity.type === ActivityType.Custom);
 
-		if (cachedUserPresence && !customActivity) {
+		if (cachedUserPresence && !customActivity?.state?.length) {
 			cachedPresencesInGuild.delete(data.user.id);
 			this.client.guildPresenceCache.set(data.guild_id, cachedPresencesInGuild);
 
@@ -28,9 +34,17 @@ export default class PresenceUpdate extends EventHandler {
 
 			const validStatusRoleIds = new Set<string>();
 
-			for (const statusRoleId of Object.values(this.client.config.otherConfig.statusRoles[data.guild_id] ?? {})) {
-				const validRole = rolesInGuild.get(statusRoleId);
-				if (!validRole) continue;
+			const statusRoles = await this.client.prisma.statusRole.findMany({ where: { guildId: data.guild_id } });
+
+			if (!statusRoles.length) return;
+
+			for (const statusRole of statusRoles) {
+				const validRole = rolesInGuild.get(statusRole.roleId);
+				if (!validRole) {
+					await this.client.prisma.statusRole.delete({ where: { id: statusRole.id } });
+
+					continue;
+				}
 
 				validStatusRoleIds.add(validRole.id);
 			}
@@ -85,17 +99,39 @@ export default class PresenceUpdate extends EventHandler {
 
 		let removeOldRoles = false;
 
-		for (const [requiredText, statusRoleId] of Object.entries(
-			this.client.config.otherConfig.statusRoles[data.guild_id] ?? {},
-		)) {
-			const validRole = rolesInGuild.get(statusRoleId);
-			if (!validRole) continue;
+		const statusRoles = await this.client.prisma.statusRole.findMany({ where: { guildId: data.guild_id } });
+
+		if (!statusRoles.length) return;
+
+		const messagesToSend: Record<string, RESTPostAPIChannelMessageJSONBody[]> = {};
+
+		for (const statusRole of statusRoles) {
+			const validRole = rolesInGuild.get(statusRole.roleId);
+			if (!validRole) {
+				await this.client.prisma.statusRole.delete({ where: { id: statusRole.id } });
+
+				continue;
+			}
 
 			validStatusRoleIds.add(validRole.id);
 
-			if (customActivity.state.toLowerCase().includes(requiredText.toLowerCase())) rolesIdsToAdd.add(validRole.id);
+			if (customActivity.state.toLowerCase().includes(statusRole.requiredText.toLowerCase())) {
+				rolesIdsToAdd.add(validRole.id);
 
-			if (!removeOldRoles && cachedUserPresence?.toLowerCase().includes(requiredText.toLowerCase()))
+				if (statusRole.embedName && statusRole.channelId) {
+					const embed = await this.client.prisma.embed.findUnique({
+						where: { embedName_guildId: { embedName: statusRole.embedName, guildId: data.guild_id } },
+					});
+
+					if (embed) {
+						if (!messagesToSend[statusRole.channelId]) messagesToSend[statusRole.channelId] = [];
+
+						messagesToSend[statusRole.channelId]!.push(embed.messagePayload as RESTPostAPIChannelMessageJSONBody);
+					}
+				}
+			}
+
+			if (!removeOldRoles && cachedUserPresence?.toLowerCase().includes(statusRole.requiredText.toLowerCase()))
 				removeOldRoles = true;
 		}
 
@@ -111,8 +147,10 @@ export default class PresenceUpdate extends EventHandler {
 			throw error;
 		}
 
+		let newMember: APIGuildMember;
+
 		try {
-			await this.client.api.guilds.editMember(data.guild_id, data.user.id, {
+			newMember = await this.client.api.guilds.editMember(data.guild_id, data.user.id, {
 				roles: member.roles.filter((roleId) => !validStatusRoleIds.has(roleId)).concat([...rolesIdsToAdd]),
 			});
 
@@ -123,8 +161,6 @@ export default class PresenceUpdate extends EventHandler {
 					rolesIdsToAdd.size ? `, then I added the following roles: ${[...rolesIdsToAdd].map((roleId) => roleId)}` : `.`
 				}`,
 			);
-
-			return;
 		} catch (error) {
 			if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions) {
 				this.client.logger.error(`Missing permissions to edit roles for guild ${data.guild_id}`);
@@ -133,5 +169,44 @@ export default class PresenceUpdate extends EventHandler {
 
 			throw error;
 		}
+
+		// eslint-disable-next-line @typescript-eslint/require-array-sort-compare
+		const newMemberRoles = newMember.roles.sort();
+		// eslint-disable-next-line @typescript-eslint/require-array-sort-compare
+		const memberRoles = member.roles.sort();
+
+		if (
+			!messagesToSend ||
+			(member.roles.length === newMember.roles.length &&
+				memberRoles.every((role, index) => role === newMemberRoles[index]))
+		)
+			return;
+
+		return Promise.all(
+			Object.entries(messagesToSend).flatMap(([channelId, messagePayloads]) => {
+				return messagePayloads.map(async (messagePayload) => {
+					try {
+						await this.client.api.channels.createMessage(
+							channelId,
+							JSON.parse(JSON.stringify(messagePayload).replaceAll("{{user}}", `<@${data.user.id}>`)),
+						);
+					} catch (error) {
+						if (error instanceof DiscordAPIError) {
+							if (error.code === RESTJSONErrorCodes.MissingPermissions) {
+								this.client.logger.error(`Missing permissions to send messages in channel ${channelId}`);
+
+								return;
+							} else if (error.code === RESTJSONErrorCodes.RequestBodyContainsInvalidJSON) {
+								this.client.logger.error(`Invalid JSON in embed for guild ${data.guild_id}`);
+
+								return;
+							}
+						}
+
+						throw error;
+					}
+				});
+			}),
+		);
 	}
 }

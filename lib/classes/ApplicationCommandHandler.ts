@@ -300,7 +300,7 @@ export default class ApplicationCommandHandler {
 				} else {
 					const identifier = applicationCommandOptionTypeReference[currentOption.type] as keyof Omit<
 						InteractionArguments,
-						"subCommand" | "subCommandGroup"
+						"focused" | "subCommand" | "subCommandGroup"
 					>;
 
 					if (

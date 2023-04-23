@@ -17,6 +17,10 @@ export interface InteractionArguments {
 	attachments?: Record<string, APIAttachment>;
 	booleans?: Record<string, APIApplicationCommandInteractionDataBooleanOption>;
 	channels?: Record<string, APIInteractionDataResolvedChannel>;
+	focused?:
+		| APIApplicationCommandInteractionDataIntegerOption
+		| APIApplicationCommandInteractionDataNumberOption
+		| APIApplicationCommandInteractionDataStringOption;
 	integers?: Record<string, APIApplicationCommandInteractionDataIntegerOption>;
 	members?: Record<string, APIInteractionDataResolvedGuildMember>;
 	mentionables?: Record<string, APIApplicationCommandInteractionDataMentionableOption>;

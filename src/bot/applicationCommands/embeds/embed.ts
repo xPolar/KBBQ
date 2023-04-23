@@ -144,8 +144,6 @@ export default class Embeds extends ApplicationCommand {
 		language: Language;
 		shardId: number;
 	}) {
-		this.client.logger.debug(interaction.arguments);
-
 		if (
 			interaction.arguments.subCommand!.name ===
 			this.client.languageHandler.defaultLanguage!.get("EMBED_CREATE_SUB_COMMAND_NAME")

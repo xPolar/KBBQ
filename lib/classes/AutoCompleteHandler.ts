@@ -61,6 +61,8 @@ export default class AutoCompleteHandler {
 	 * @returns The auto complete with the specified name within the accepts field, otherwise undefined.
 	 */
 	private getAutoComplete(name: string) {
+		this.client.logger.debug(100, name);
+
 		return [...this.client.autoCompletes.values()].find((autoComplete) => autoComplete.accepts.includes(name));
 	}
 
@@ -107,7 +109,7 @@ export default class AutoCompleteHandler {
 			} else {
 				const identifier = applicationCommandOptionTypeReference[currentOption.type] as keyof Omit<
 					InteractionArguments,
-					"subCommand" | "subCommandGroup"
+					"focused" | "subCommand" | "subCommandGroup"
 				>;
 
 				if (
@@ -123,8 +125,10 @@ export default class AutoCompleteHandler {
 
 				applicationCommandArguments[identifier]![currentOption.name] = currentOption as any;
 
-				if ((applicationCommandArguments[identifier]![currentOption.name] as any).focused)
+				if ((applicationCommandArguments[identifier]![currentOption.name] as any).focused) {
+					applicationCommandArguments.focused = currentOption as any;
 					name.push(currentOption.name);
+				}
 			}
 		}
 

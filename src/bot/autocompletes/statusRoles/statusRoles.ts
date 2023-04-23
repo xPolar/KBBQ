@@ -7,9 +7,9 @@ import type Language from "../../../../lib/classes/Language.js";
 import type ExtendedClient from "../../../../lib/extensions/ExtendedClient.js";
 import type { APIInteractionWithArguments } from "../../../../typings/index.js";
 
-export default class EmbedName extends AutoComplete {
+export default class StatusRoles extends AutoComplete {
 	public constructor(client: ExtendedClient) {
-		super(["embed-delete-name", "embed-send-name", "status_role-create-embed"], client);
+		super(["status_role-delete-status_role"], client);
 	}
 
 	/**
@@ -29,13 +29,32 @@ export default class EmbedName extends AutoComplete {
 	}) {
 		const currentValue = interaction.arguments.focused as APIApplicationCommandInteractionDataStringOption;
 
-		const embeds = await this.client.prisma.embed.findMany({
-			where: { embedName: { contains: currentValue.value }, guildId: interaction.guild_id! },
-		});
+		const guildRoles = this.client.guildRolesCache.get(interaction.guild_id!);
+
+		if (!guildRoles)
+			return this.client.api.interactions.createAutocompleteResponse(interaction.id, interaction.token, {
+				choices: [],
+			});
+
+		const statusRoles = (
+			await this.client.prisma.statusRole.findMany({
+				where: { guildId: interaction.guild_id! },
+			})
+		).filter((statusRole) => guildRoles.get(statusRole.roleId));
 
 		return this.client.api.interactions.createAutocompleteResponse(interaction.id, interaction.token, {
-			choices: embeds.length
-				? embeds.map((embed) => ({ name: embed.embedName, value: embed.embedName }))
+			choices: statusRoles.length
+				? statusRoles.map((statusRole) => {
+						const role = guildRoles.get(statusRole.roleId)!;
+						let name = `${statusRole.requiredText}: ${role.name}`;
+
+						if (name.length > 97) name = `${name.slice(0, 97)}...`;
+
+						return {
+							name,
+							value: statusRole.id,
+						};
+				  })
 				: [{ name: currentValue.value, value: currentValue.value }],
 		});
 	}
