@@ -21,7 +21,7 @@ writeFile(
 	`/* eslint-disable typescript-sort-keys/interface */\n\nexport interface LanguageValues {\n${[
 		...interfaceMap.entries(),
 	]
-		.map(([key, value]) => `${key}: {${value.map((val) => `${val}: any`).join(", ")}}`)
+		.map(([key, value]) => `${key}: {${[...new Set(value)].map((val) => `${val}: any`).join(", ")}}`)
 		.join(",\n")}\n}`,
 	() => {},
 );

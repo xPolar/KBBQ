@@ -53,3 +53,20 @@ model WeeklyActivity {
     @@id([userId, guildId])
     @@map("weekly_activity")
 }
+
+model Embed {
+    embedName String
+    guildId   String
+
+    messagePayload Json
+
+    @@id([embedName, guildId])
+    @@map("embeds")
+}
+
+model StatusLogChannel {
+    guildId   String @id
+    channelId String
+
+    @@map("status_log_channels")
+}
