@@ -1,18 +1,20 @@
-import type {
-	APIGuildMember,
-	APIRole,
-	GatewayPresenceUpdateDispatchData,
-	WithIntrinsicProps,
-	RESTPostAPIChannelMessageJSONBody,
-} from "@discordjs/core";
+import type { APIGuildMember, APIRole, GatewayPresenceUpdateDispatchData, WithIntrinsicProps } from "@discordjs/core";
 import { RESTJSONErrorCodes, ActivityType, GatewayDispatchEvents } from "@discordjs/core";
 import { DiscordAPIError } from "@discordjs/rest";
+import type { Embed } from "@prisma/client";
 import EventHandler from "../../../lib/classes/EventHandler.js";
 import type ExtendedClient from "../../../lib/extensions/ExtendedClient.js";
 
 export default class PresenceUpdate extends EventHandler {
+	/**
+	 * A cache of when a user was last thanked for changing their status for each embed.
+	 */
+	private readonly lastSentCache: Record<string, Record<string, number>>;
+
 	public constructor(client: ExtendedClient) {
 		super(client, GatewayDispatchEvents.PresenceUpdate, false);
+
+		this.lastSentCache = {};
 	}
 
 	/**
@@ -103,7 +105,7 @@ export default class PresenceUpdate extends EventHandler {
 
 		if (!statusRoles.length) return;
 
-		const messagesToSend: Record<string, RESTPostAPIChannelMessageJSONBody[]> = {};
+		const messagesToSend: Record<string, Embed[]> = {};
 
 		for (const statusRole of statusRoles) {
 			const validRole = rolesInGuild.get(statusRole.roleId);
@@ -126,7 +128,7 @@ export default class PresenceUpdate extends EventHandler {
 					if (embed) {
 						if (!messagesToSend[statusRole.channelId]) messagesToSend[statusRole.channelId] = [];
 
-						messagesToSend[statusRole.channelId]!.push(embed.messagePayload as RESTPostAPIChannelMessageJSONBody);
+						messagesToSend[statusRole.channelId]!.push(embed);
 					}
 				}
 			}
@@ -185,11 +187,16 @@ export default class PresenceUpdate extends EventHandler {
 		return Promise.all(
 			Object.entries(messagesToSend).flatMap(([channelId, messagePayloads]) => {
 				return messagePayloads.map(async (messagePayload) => {
+					if ((this.lastSentCache[messagePayload.embedName]?.[data.user.id] ?? 0) > Date.now()) return;
+
 					try {
 						await this.client.api.channels.createMessage(channelId, {
-							...JSON.parse(JSON.stringify(messagePayload).replaceAll("{{user}}", `<@${data.user.id}>`)),
+							...JSON.parse(JSON.stringify(messagePayload.messagePayload).replaceAll("{{user}}", `<@${data.user.id}>`)),
 							allowed_mentions: { parse: [], users: [data.user.id] },
 						});
+
+						if (!this.lastSentCache[messagePayload.embedName]) this.lastSentCache[messagePayload.embedName] = {};
+						this.lastSentCache[messagePayload.embedName]![data.user.id] = Date.now() + 10 * 60 * 1_000;
 					} catch (error) {
 						if (error instanceof DiscordAPIError) {
 							if (error.code === RESTJSONErrorCodes.MissingPermissions) {
