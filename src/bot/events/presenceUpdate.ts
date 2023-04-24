@@ -196,7 +196,7 @@ export default class PresenceUpdate extends EventHandler {
 						});
 
 						if (!this.lastSentCache[messagePayload.embedName]) this.lastSentCache[messagePayload.embedName] = {};
-						this.lastSentCache[messagePayload.embedName]![data.user.id] = Date.now() + 10 * 60 * 1_000;
+						this.lastSentCache[messagePayload.embedName]![data.user.id] = Date.now() + 24 * 60 * 60 * 1_000;
 					} catch (error) {
 						if (error instanceof DiscordAPIError) {
 							if (error.code === RESTJSONErrorCodes.MissingPermissions) {
