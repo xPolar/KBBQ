@@ -324,7 +324,13 @@ export default class ExtendedClient extends Client {
 					.$transaction(
 						[...userIds.values()].map((userId) =>
 							this.prisma.weeklyActivity.findUnique({
-								where: { userId_guildId: { userId, guildId } },
+								where: {
+									userId_guildId_currentWeek: {
+										guildId,
+										userId,
+										currentWeek,
+									},
+								},
 							}),
 						),
 					)
@@ -332,7 +338,13 @@ export default class ExtendedClient extends Client {
 						await this.prisma.$transaction(
 							userActivities.filter(Boolean).map((userActivity) =>
 								this.prisma.weeklyActivity.upsert({
-									where: { userId_guildId: { guildId, userId: userActivity!.userId } },
+									where: {
+										userId_guildId_currentWeek: {
+											guildId,
+											userId: userActivity!.userId,
+											currentWeek,
+										},
+									},
 									create: {
 										messages: 0,
 										currentWeek,
@@ -340,10 +352,7 @@ export default class ExtendedClient extends Client {
 										userId: userActivity!.userId,
 										minutesInVoice: 1,
 									},
-									update:
-										currentWeek === userActivity?.currentWeek
-											? { minutesInVoice: { increment: 1 } }
-											: { minutesInVoice: 1, currentWeek, messages: 0 },
+									update: { minutesInVoice: { increment: 1 } },
 								}),
 							),
 						);

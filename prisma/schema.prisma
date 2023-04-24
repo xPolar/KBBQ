@@ -50,7 +50,7 @@ model WeeklyActivity {
     messages       Int
     minutesInVoice Int
 
-    @@id([userId, guildId])
+    @@unique([userId, guildId, currentWeek])
     @@map("weekly_activity")
 }
 

@@ -25,12 +25,15 @@ export default class MessageCreate extends EventHandler {
 
 		if (message.guild_id) {
 			const currentWeek = this.client.functions.getWeekOfYear();
-			const userActivity = await this.client.prisma.weeklyActivity.findUnique({
-				where: { userId_guildId: { guildId: message.guild_id!, userId: message.author.id } },
-			});
 
 			await this.client.prisma.weeklyActivity.upsert({
-				where: { userId_guildId: { guildId: message.guild_id!, userId: message.author.id } },
+				where: {
+					userId_guildId_currentWeek: {
+						guildId: message.guild_id!,
+						userId: message.author.id,
+						currentWeek,
+					},
+				},
 				create: {
 					messages: 1,
 					currentWeek,
@@ -38,8 +41,7 @@ export default class MessageCreate extends EventHandler {
 					userId: message.author.id,
 					minutesInVoice: 0,
 				},
-				update:
-					currentWeek === userActivity?.currentWeek ? { messages: { increment: 1 } } : { messages: 1, currentWeek },
+				update: { messages: { increment: 1 } },
 			});
 
 			if (Date.now() < (this.experienceCooldown.get(message.author.id) || 0)) return;
