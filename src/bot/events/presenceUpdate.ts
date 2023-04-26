@@ -72,7 +72,7 @@ export default class PresenceUpdate extends EventHandler {
 					roles: member.roles.filter((roleId) => !validStatusRoleIds.has(roleId)),
 				});
 
-				this.client.logger.debug(
+				this.client.logger.info(
 					`User ${data.user.id} cleared their status, their status was previously ${cachedUserPresence}.`,
 				);
 
@@ -156,7 +156,7 @@ export default class PresenceUpdate extends EventHandler {
 				roles: member.roles.filter((roleId) => !validStatusRoleIds.has(roleId)).concat([...rolesIdsToAdd]),
 			});
 
-			this.client.logger.debug(
+			this.client.logger.info(
 				`User ${data.user.id} updated their status, it is now ${
 					customActivity.state
 				}, I have removed all status roles from them${

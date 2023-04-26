@@ -7,19 +7,9 @@ import type Language from "../../../../lib/classes/Language.js";
 import type ExtendedClient from "../../../../lib/extensions/ExtendedClient.js";
 import type { APIInteractionWithArguments } from "../../../../typings/index.js";
 
-export default class EmbedName extends AutoComplete {
+export default class Component extends AutoComplete {
 	public constructor(client: ExtendedClient) {
-		super(
-			[
-				"embed-delete-name",
-				"embed-send-name",
-				"status_role-create-embed",
-				"embed-buttons-add-embed",
-				"embed-buttons-remove-embed",
-				"welcome_message-create-embed",
-			],
-			client,
-		);
+		super(["embed-buttons-remove-button"], client);
 	}
 
 	/**
@@ -38,14 +28,30 @@ export default class EmbedName extends AutoComplete {
 		shardId: number;
 	}) {
 		const currentValue = interaction.arguments.focused as APIApplicationCommandInteractionDataStringOption;
+		const embedName =
+			interaction.arguments.strings![
+				this.client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_EMBED_NAME")
+			]!.value;
 
-		const embeds = await this.client.prisma.embed.findMany({
-			where: { embedName: { contains: currentValue.value }, guildId: interaction.guild_id! },
+		if (!embedName)
+			return this.client.api.interactions.createAutocompleteResponse(interaction.id, interaction.token, {
+				choices: [{ name: currentValue.value, value: currentValue.value }],
+			});
+
+		const components = await this.client.prisma.messageComponent.findMany({
+			where: { guildId: interaction.guild_id!, embedName },
+			orderBy: { position: "asc" },
 		});
 
 		return this.client.api.interactions.createAutocompleteResponse(interaction.id, interaction.token, {
-			choices: embeds.length
-				? embeds.map((embed) => ({ name: embed.embedName, value: embed.embedName }))
+			choices: components.length
+				? components.map((component) => {
+						let name = `${component.label}: ${component.url}`;
+
+						if (name.length > 97) name = `${name.slice(0, 97)}...`;
+
+						return { name, value: component.id };
+				  })
 				: [{ name: currentValue.value, value: currentValue.value }],
 		});
 	}

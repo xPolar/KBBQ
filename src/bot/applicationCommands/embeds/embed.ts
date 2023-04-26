@@ -1,4 +1,9 @@
-import type { APIApplicationCommandInteraction, RESTPostAPIChannelMessageJSONBody } from "@discordjs/core";
+import type {
+	APIActionRowComponent,
+	APIApplicationCommandInteraction,
+	APIButtonComponent,
+	RESTPostAPIChannelMessageJSONBody,
+} from "@discordjs/core";
 import {
 	ChannelType,
 	RESTJSONErrorCodes,
@@ -57,6 +62,114 @@ export default class Embeds extends ApplicationCommand {
 								),
 								type: ApplicationCommandOptionType.String,
 								required: true,
+							},
+						],
+					},
+					{
+						name: client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_SUB_COMMAND_GROUP_NAME"),
+						description: client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_SUB_COMMAND_GROUP_DESCRIPTION"),
+						name_localizations: client.languageHandler.getFromAllLanguages("EMBED_BUTTONS_SUB_COMMAND_GROUP_NAME"),
+						description_localizations: client.languageHandler.getFromAllLanguages(
+							"EMBED_BUTTONS_SUB_COMMAND_GROUP_DESCRIPTION",
+						),
+						type: ApplicationCommandOptionType.SubcommandGroup,
+						options: [
+							{
+								name: client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_NAME"),
+								description: client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_DESCRIPTION"),
+								name_localizations: client.languageHandler.getFromAllLanguages("EMBED_BUTTONS_ADD_SUB_COMMAND_NAME"),
+								description_localizations: client.languageHandler.getFromAllLanguages(
+									"EMBED_BUTTONS_ADD_SUB_COMMAND_DESCRIPTION",
+								),
+								type: ApplicationCommandOptionType.Subcommand,
+								options: [
+									{
+										name: client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_EMBED_NAME"),
+										description: client.languageHandler.defaultLanguage!.get(
+											"EMBED_BUTTONS_ADD_SUB_COMMAND_EMBED_DESCRIPTION",
+										),
+										name_localizations: client.languageHandler.getFromAllLanguages(
+											"EMBED_BUTTONS_ADD_SUB_COMMAND_EMBED_NAME",
+										),
+										description_localizations: client.languageHandler.getFromAllLanguages(
+											"EMBED_BUTTONS_ADD_SUB_COMMAND_EMBED_DESCRIPTION",
+										),
+										type: ApplicationCommandOptionType.String,
+										required: true,
+										autocomplete: true,
+									},
+									{
+										name: client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_LABEL_NAME"),
+										description: client.languageHandler.defaultLanguage!.get(
+											"EMBED_BUTTONS_ADD_SUB_COMMAND_LABEL_DESCRIPTION",
+										),
+										name_localizations: client.languageHandler.getFromAllLanguages(
+											"EMBED_BUTTONS_ADD_SUB_COMMAND_LABEL_NAME",
+										),
+										description_localizations: client.languageHandler.getFromAllLanguages(
+											"EMBED_BUTTONS_ADD_SUB_COMMAND_LABEL_DESCRIPTION",
+										),
+										type: ApplicationCommandOptionType.String,
+										required: true,
+									},
+									{
+										name: client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_URL_NAME"),
+										description: client.languageHandler.defaultLanguage!.get(
+											"EMBED_BUTTONS_ADD_SUB_COMMAND_URL_DESCRIPTION",
+										),
+										name_localizations: client.languageHandler.getFromAllLanguages(
+											"EMBED_BUTTONS_ADD_SUB_COMMAND_URL_NAME",
+										),
+										description_localizations: client.languageHandler.getFromAllLanguages(
+											"EMBED_BUTTONS_ADD_SUB_COMMAND_URL_DESCRIPTION",
+										),
+										type: ApplicationCommandOptionType.String,
+										required: true,
+									},
+								],
+							},
+							{
+								name: client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_REMOVE_SUB_COMMAND_NAME"),
+								description: client.languageHandler.defaultLanguage!.get(
+									"EMBED_BUTTONS_REMOVE_SUB_COMMAND_DESCRIPTION",
+								),
+								name_localizations: client.languageHandler.getFromAllLanguages("EMBED_BUTTONS_REMOVE_SUB_COMMAND_NAME"),
+								description_localizations: client.languageHandler.getFromAllLanguages(
+									"EMBED_BUTTONS_REMOVE_SUB_COMMAND_DESCRIPTION",
+								),
+								type: ApplicationCommandOptionType.Subcommand,
+								options: [
+									{
+										name: client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_REMOVE_SUB_COMMAND_EMBED_NAME"),
+										description: client.languageHandler.defaultLanguage!.get(
+											"EMBED_BUTTONS_REMOVE_SUB_COMMAND_EMBED_DESCRIPTION",
+										),
+										name_localizations: client.languageHandler.getFromAllLanguages(
+											"EMBED_BUTTONS_REMOVE_SUB_COMMAND_EMBED_NAME",
+										),
+										description_localizations: client.languageHandler.getFromAllLanguages(
+											"EMBED_BUTTONS_REMOVE_SUB_COMMAND_EMBED_DESCRIPTION",
+										),
+										type: ApplicationCommandOptionType.String,
+										required: true,
+										autocomplete: true,
+									},
+									{
+										name: client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_REMOVE_SUB_COMMAND_BUTTON_NAME"),
+										description: client.languageHandler.defaultLanguage!.get(
+											"EMBED_BUTTONS_REMOVE_SUB_COMMAND_BUTTON_DESCRIPTION",
+										),
+										name_localizations: client.languageHandler.getFromAllLanguages(
+											"EMBED_BUTTONS_REMOVE_SUB_COMMAND_BUTTON_NAME",
+										),
+										description_localizations: client.languageHandler.getFromAllLanguages(
+											"EMBED_BUTTONS_REMOVE_SUB_COMMAND_BUTTON_DESCRIPTION",
+										),
+										type: ApplicationCommandOptionType.String,
+										required: true,
+										autocomplete: true,
+									},
+								],
 							},
 						],
 					},
@@ -144,6 +257,106 @@ export default class Embeds extends ApplicationCommand {
 		language: Language;
 		shardId: number;
 	}) {
+		if (
+			interaction.arguments.subCommandGroup?.name ===
+			this.client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_SUB_COMMAND_GROUP_NAME")
+		) {
+			if (
+				interaction.arguments.subCommand!.name ===
+				this.client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_NAME")
+			) {
+				const embedName =
+					interaction.arguments.strings![
+						this.client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_EMBED_NAME")
+					]!.value;
+
+				const embed = await this.client.prisma.embed.findUnique({
+					where: { embedName_guildId: { embedName, guildId: interaction.guild_id! } },
+					include: { messageComponents: true },
+				});
+
+				if (!embed)
+					return this.client.api.interactions.reply(interaction.id, interaction.token, {
+						embeds: [
+							{
+								title: language.get("INVALID_ARGUMENT_TITLE"),
+								description: language.get("INVALID_ARGUMENT_EMBED_DESCRIPTION"),
+								color: this.client.config.colors.error,
+							},
+						],
+						allowed_mentions: { parse: [] },
+					});
+
+				const buttonLabel =
+					interaction.arguments.strings![
+						this.client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_LABEL_NAME")
+					]!.value;
+
+				if (buttonLabel.length > 80)
+					return this.client.api.interactions.reply(interaction.id, interaction.token, {
+						embeds: [
+							{
+								title: language.get("INVALID_ARGUMENT_TITLE"),
+								description: language.get("INVALID_ARGUMENT_LABEL_DESCRIPTION", { length: buttonLabel.length }),
+								color: this.client.config.colors.error,
+							},
+						],
+						allowed_mentions: { parse: [] },
+					});
+
+				const buttonURL =
+					interaction.arguments.strings![
+						this.client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_URL_NAME")
+					]!.value;
+
+				return Promise.all([
+					this.client.prisma.messageComponent.create({
+						data: {
+							guildId: interaction.guild_id!,
+							embedName,
+							label: buttonLabel,
+							url: buttonURL,
+							position: (embed.messageComponents.length as number) + 1,
+						},
+					}),
+					this.client.api.interactions.reply(interaction.id, interaction.token, {
+						embeds: [
+							{
+								title: language.get("EMBED_BUTTON_ADDED_TITLE"),
+								description: language.get("EMBED_BUTTON_ADDED_DESCRIPTION", { buttonLabel, embedName }),
+								color: this.client.config.colors.success,
+							},
+						],
+						allowed_mentions: { parse: [] },
+					}),
+				]);
+			}
+
+			const componentId =
+				interaction.arguments.strings![
+					this.client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_REMOVE_SUB_COMMAND_BUTTON_NAME")
+				]!.value;
+
+			const component = await this.client.prisma.messageComponent.delete({ where: { id: componentId } });
+
+			return Promise.all([
+				this.client.prisma.messageComponent.updateMany({
+					where: { guildId: component.guildId, embedName: component.embedName, position: { gte: component.position } },
+					data: { position: { decrement: 1 } },
+				}),
+				this.client.api.interactions.reply(interaction.id, interaction.token, {
+					embeds: [
+						{
+							title: language.get("EMBED_BUTTON_REMOVED_TITLE"),
+							description: language.get("EMBED_BUTTON_REMOVED_DESCRIPTION"),
+							color: this.client.config.colors.success,
+						},
+					],
+					allowed_mentions: { parse: [] },
+				}),
+			]);
+		}
+
 		if (
 			interaction.arguments.subCommand!.name ===
 			this.client.languageHandler.defaultLanguage!.get("EMBED_CREATE_SUB_COMMAND_NAME")
@@ -258,12 +471,56 @@ export default class Embeds extends ApplicationCommand {
 
 			let message;
 
+			const messageComponents = await this.client.prisma.messageComponent.findMany({
+				where: { embedName, guildId: interaction.guild_id! },
+				orderBy: { position: "asc" },
+			});
+
+			const actionRows: APIActionRowComponent<APIButtonComponent>[] = [];
+			let currentActionRow: APIButtonComponent[] = [];
+
+			let index = 0;
+
+			for (const messageComponent of messageComponents) {
+				if (index !== 0 && index % 5 === 0) {
+					actionRows.push({
+						components: currentActionRow,
+						type: ComponentType.ActionRow,
+					});
+
+					currentActionRow = [];
+				}
+
+				currentActionRow.push({
+					style: ButtonStyle.Link,
+					type: ComponentType.Button,
+					label: messageComponent.label,
+					url: messageComponent.url,
+				});
+
+				index++;
+			}
+
+			if (currentActionRow.length !== 0)
+				actionRows.push({
+					components: currentActionRow,
+					type: ComponentType.ActionRow,
+				});
+
 			try {
 				message = await this.client.api.channels.createMessage(
 					interaction.arguments.channels![
 						this.client.languageHandler.defaultLanguage!.get("EMBED_SEND_SUB_COMMAND_CHANNEL_NAME")
 					]!.id,
-					{ ...(embed.messagePayload as RESTPostAPIChannelMessageJSONBody), allowed_mentions: { parse: [] } },
+					JSON.parse(
+						JSON.stringify({
+							...(embed.messagePayload as RESTPostAPIChannelMessageJSONBody),
+							allowed_mentions: { parse: [], users: [(interaction.member?.user ?? interaction.user!).id] },
+							components: actionRows,
+						})
+							.replaceAll("{{user}}", `<@${interaction.member!.user.id}>`)
+							.replaceAll("{{tag}}", `${interaction.member!.user.username}#${interaction.member!.user.discriminator}`),
+					),
 				);
 			} catch (error) {
 				if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.RequestBodyContainsInvalidJSON)

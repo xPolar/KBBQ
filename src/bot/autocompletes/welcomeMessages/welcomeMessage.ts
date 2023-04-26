@@ -1,25 +1,19 @@
 import type {
 	APIApplicationCommandAutocompleteInteraction,
 	APIApplicationCommandInteractionDataStringOption,
+	APIApplicationCommandOptionChoice,
+	APIChannel,
 } from "@discordjs/core";
+import { RESTJSONErrorCodes } from "@discordjs/core";
+import { DiscordAPIError } from "@discordjs/rest";
 import AutoComplete from "../../../../lib/classes/AutoComplete.js";
 import type Language from "../../../../lib/classes/Language.js";
 import type ExtendedClient from "../../../../lib/extensions/ExtendedClient.js";
 import type { APIInteractionWithArguments } from "../../../../typings/index.js";
 
-export default class EmbedName extends AutoComplete {
+export default class WelcomeMessage extends AutoComplete {
 	public constructor(client: ExtendedClient) {
-		super(
-			[
-				"embed-delete-name",
-				"embed-send-name",
-				"status_role-create-embed",
-				"embed-buttons-add-embed",
-				"embed-buttons-remove-embed",
-				"welcome_message-create-embed",
-			],
-			client,
-		);
+		super(["welcome_message-remove-welcome_message"], client);
 	}
 
 	/**
@@ -39,13 +33,34 @@ export default class EmbedName extends AutoComplete {
 	}) {
 		const currentValue = interaction.arguments.focused as APIApplicationCommandInteractionDataStringOption;
 
-		const embeds = await this.client.prisma.embed.findMany({
-			where: { embedName: { contains: currentValue.value }, guildId: interaction.guild_id! },
+		const welcomeMessages = await this.client.prisma.welcomeMessage.findMany({
+			where: { guildId: interaction.guild_id! },
 		});
 
+		const channelCache: Record<string, APIChannel> = {};
+
 		return this.client.api.interactions.createAutocompleteResponse(interaction.id, interaction.token, {
-			choices: embeds.length
-				? embeds.map((embed) => ({ name: embed.embedName, value: embed.embedName }))
+			choices: welcomeMessages.length
+				? (welcomeMessages
+						.map(async (welcomeMessage) => {
+							if (!channelCache[welcomeMessage.channelId]) {
+								try {
+									// eslint-disable-next-line require-atomic-updates
+									channelCache[welcomeMessage.channelId] = await this.client.api.channels.get(welcomeMessage.channelId);
+								} catch (error) {
+									if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownChannel) return null;
+
+									throw error;
+								}
+							}
+
+							let name = `${channelCache[welcomeMessage.channelId]!.name}: ${welcomeMessage.embedName}`;
+
+							if (name.length > 97) name = `${name.slice(0, 97)}...`;
+
+							return { name, value: welcomeMessage.id };
+						})
+						.filter(Boolean) as unknown as APIApplicationCommandOptionChoice[])
 				: [{ name: currentValue.value, value: currentValue.value }],
 		});
 	}

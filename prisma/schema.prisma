@@ -58,10 +58,24 @@ model Embed {
     embedName String
     guildId   String
 
-    messagePayload Json
+    messagePayload    Json
+    messageComponents MessageComponent[]
 
     @@id([embedName, guildId])
     @@map("embeds")
+}
+
+model MessageComponent {
+    id       String @id @default(cuid())
+    guildId  String
+    url      String
+    label    String
+    position Int
+
+    embedName String
+    embed     Embed  @relation(fields: [embedName, guildId], references: [embedName, guildId])
+
+    @@map("message_components")
 }
 
 model StatusRole {
@@ -74,4 +88,13 @@ model StatusRole {
 
     @@unique([guildId, roleId, requiredText])
     @@map("status_roles")
+}
+
+model WelcomeMessage {
+    id        String @id @default(cuid())
+    guildId   String
+    channelId String
+    embedName String
+
+    @@map("welcome_messages")
 }
