@@ -1,5 +1,10 @@
 import type { APIApplicationCommandInteraction } from "@discordjs/core";
-import { ApplicationCommandOptionType, ChannelType, ApplicationCommandType } from "@discordjs/core";
+import {
+	PermissionFlagsBits,
+	ApplicationCommandOptionType,
+	ChannelType,
+	ApplicationCommandType,
+} from "@discordjs/core";
 import ApplicationCommand from "../../../../lib/classes/ApplicationCommand.js";
 import type Language from "../../../../lib/classes/Language.js";
 import type ExtendedClient from "../../../../lib/extensions/ExtendedClient.js";
@@ -90,6 +95,8 @@ export default class WelcomeMessage extends ApplicationCommand {
 						],
 					},
 				],
+				dm_permission: false,
+				default_member_permissions: PermissionFlagsBits.ManageGuild.toString(),
 			},
 		});
 	}
