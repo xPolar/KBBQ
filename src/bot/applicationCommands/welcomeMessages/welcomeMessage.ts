@@ -64,6 +64,21 @@ export default class WelcomeMessage extends ApplicationCommand {
 								required: true,
 								autocomplete: true,
 							},
+							{
+								name: client.languageHandler.defaultLanguage!.get(
+									"WELCOME_MESSAGE_CREATE_SUB_COMMAND_DELETE_AFTER_NAME",
+								),
+								description: client.languageHandler.defaultLanguage!.get(
+									"WELCOME_MESSAGE_CREATE_SUB_COMMAND_DELETE_AFTER_DESCRIPTION",
+								),
+								name_localizations: client.languageHandler.getFromAllLanguages(
+									"WELCOME_MESSAGE_CREATE_SUB_COMMAND_DELETE_AFTER_NAME",
+								),
+								description_localizations: client.languageHandler.getFromAllLanguages(
+									"WELCOME_MESSAGE_CREATE_SUB_COMMAND_DELETE_AFTER_DESCRIPTION",
+								),
+								type: ApplicationCommandOptionType.String,
+							},
 						],
 					},
 					{
@@ -142,6 +157,19 @@ export default class WelcomeMessage extends ApplicationCommand {
 					allowed_mentions: { parse: [] },
 				});
 
+			const expiry = this.client.functions.parse(
+				interaction.arguments.strings![
+					this.client.languageHandler.defaultLanguage!.get("WELCOME_MESSAGE_CREATE_SUB_COMMAND_DELETE_AFTER_NAME")
+				]?.value ?? "null",
+			);
+
+			this.client.logger.debug(
+				interaction.arguments.strings![
+					this.client.languageHandler.defaultLanguage!.get("WELCOME_MESSAGE_CREATE_SUB_COMMAND_DELETE_AFTER_NAME")
+				]?.value ?? "null",
+				expiry,
+			);
+
 			return Promise.all([
 				this.client.prisma.welcomeMessage.create({
 					data: {
@@ -151,6 +179,7 @@ export default class WelcomeMessage extends ApplicationCommand {
 							]!.id,
 						embedName,
 						guildId: interaction.guild_id!,
+						expiry,
 					},
 				}),
 				this.client.api.interactions.reply(interaction.id, interaction.token, {

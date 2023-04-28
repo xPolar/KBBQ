@@ -82,7 +82,12 @@ export default class Functions {
 	public parse(input: string, language?: Language) {
 		if (!language) language = this.client.languageHandler.getLanguage("en-US");
 
-		const RGX = language.get("PARSE_REGEX");
+		const RGX =
+			// eslint-disable-next-line unicorn/no-unsafe-regex, prefer-named-capture-group
+			/^(-?(?:\d+)?\.?\d+) *(m(?:illiseconds?|s(?:ecs?)?))?(s(?:ec(?:onds?|s)?)?)?(m(?:in(?:utes?|s)?)?)?(h(?:ours?|rs?)?)?(d(?:ays?)?)?(w(?:eeks?|ks?)?)?(y(?:ears?|rs?)?)?$/;
+		// language.get("PARSE_REGEX");
+
+		// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
 		const arr = input.toLowerCase().match(RGX);
 		let num: number;
 		// eslint-disable-next-line no-cond-assign

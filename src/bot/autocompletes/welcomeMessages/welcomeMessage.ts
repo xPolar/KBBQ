@@ -39,8 +39,8 @@ export default class WelcomeMessage extends AutoComplete {
 
 		const channelCache: Record<string, APIChannel> = {};
 
-		return this.client.api.interactions.createAutocompleteResponse(interaction.id, interaction.token, {
-			choices: welcomeMessages.length
+		this.client.logger.debug(
+			welcomeMessages.length
 				? (welcomeMessages
 						.map(async (welcomeMessage) => {
 							if (!channelCache[welcomeMessage.channelId]) {
@@ -61,6 +61,36 @@ export default class WelcomeMessage extends AutoComplete {
 							return { name, value: welcomeMessage.id };
 						})
 						.filter(Boolean) as unknown as APIApplicationCommandOptionChoice[])
+				: [{ name: currentValue.value, value: currentValue.value }],
+		);
+
+		return this.client.api.interactions.createAutocompleteResponse(interaction.id, interaction.token, {
+			choices: welcomeMessages.length
+				? ((
+						await Promise.all(
+							welcomeMessages.map(async (welcomeMessage) => {
+								if (!channelCache[welcomeMessage.channelId]) {
+									try {
+										// eslint-disable-next-line require-atomic-updates
+										channelCache[welcomeMessage.channelId] = await this.client.api.channels.get(
+											welcomeMessage.channelId,
+										);
+									} catch (error) {
+										if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownChannel)
+											return null;
+
+										throw error;
+									}
+								}
+
+								let name = `${channelCache[welcomeMessage.channelId]!.name}: ${welcomeMessage.embedName}`;
+
+								if (name.length > 97) name = `${name.slice(0, 97)}...`;
+
+								return { name, value: welcomeMessage.id };
+							}),
+						)
+				  ).filter(Boolean) as unknown as APIApplicationCommandOptionChoice[])
 				: [{ name: currentValue.value, value: currentValue.value }],
 		});
 	}

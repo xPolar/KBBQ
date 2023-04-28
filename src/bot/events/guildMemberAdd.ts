@@ -1,3 +1,4 @@
+import { setTimeout } from "node:timers";
 import type {
 	APIActionRowComponent,
 	APIButtonComponent,
@@ -72,19 +73,37 @@ export default class GuildDelete extends EventHandler {
 					type: ComponentType.ActionRow,
 				});
 
+			const avatar = `https://cdn.discordapp.com/${
+				data.avatar ?? data.user!.avatar
+					? data.avatar
+						? `guilds/${data.guild_id}/users/${data.user!.id}/avatars/${data.avatar}.png`
+						: `avatars/${data.user!.id}/${data.user!.avatar}.png`
+					: `embed/avatars/${Number.parseInt(data.user!.discriminator, 10) % 6}.png`
+			}`;
+
 			promises.push(
-				this.client.api.channels.createMessage(
-					welcomeMessage.channelId,
-					JSON.parse(
-						JSON.stringify({
-							...(embed.messagePayload as RESTPostAPIChannelMessageJSONBody),
-							allowed_mentions: { parse: [], users: [data.user!.id] },
-							components: actionRows,
-						})
-							.replaceAll("{{user}}", `<@${data.user!.id}>`)
-							.replaceAll("{{tag}}", `${data.user!.username}#${data.user!.discriminator}`),
-					),
-				),
+				this.client.api.channels
+					.createMessage(
+						welcomeMessage.channelId,
+						JSON.parse(
+							JSON.stringify({
+								...(embed.messagePayload as RESTPostAPIChannelMessageJSONBody),
+								allowed_mentions: { parse: [], users: [data.user!.id] },
+								components: actionRows,
+							})
+								.replaceAll("{{user}}", `<@${data.user!.id}>`)
+								.replaceAll("{{tag}}", `${data.user!.username}#${data.user!.discriminator}`)
+								.replaceAll("{{avatar}}", avatar),
+						),
+					)
+					// eslint-disable-next-line promise/prefer-await-to-then
+					.then((message) => {
+						if (welcomeMessage.expiry)
+							setTimeout(
+								async () => this.client.api.channels.deleteMessage(message.channel_id, message.id),
+								welcomeMessage.expiry,
+							);
+					}),
 			);
 		}
 

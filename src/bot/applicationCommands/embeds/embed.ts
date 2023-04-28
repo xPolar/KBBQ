@@ -508,6 +508,20 @@ export default class Embeds extends ApplicationCommand {
 				});
 
 			try {
+				const avatar = `https://cdn.discordapp.com/${
+					interaction.member?.avatar ?? (interaction.member?.user ?? interaction.user!).avatar
+						? interaction.member?.avatar
+							? `guilds/${interaction.guild_id}/users/${(interaction.member?.user ?? interaction.user!).id}/avatars/${
+									interaction.member.avatar
+							  }.png`
+							: `avatars/${(interaction.member?.user ?? interaction.user!).id}/${
+									(interaction.member?.user ?? interaction.user!).avatar
+							  }.png`
+						: `embed/avatars/${
+								Number.parseInt((interaction.member?.user ?? interaction.user!).discriminator, 10) % 6
+						  }.png`
+				}`;
+
 				message = await this.client.api.channels.createMessage(
 					interaction.arguments.channels![
 						this.client.languageHandler.defaultLanguage!.get("EMBED_SEND_SUB_COMMAND_CHANNEL_NAME")
@@ -519,7 +533,8 @@ export default class Embeds extends ApplicationCommand {
 							components: actionRows,
 						})
 							.replaceAll("{{user}}", `<@${interaction.member!.user.id}>`)
-							.replaceAll("{{tag}}", `${interaction.member!.user.username}#${interaction.member!.user.discriminator}`),
+							.replaceAll("{{tag}}", `${interaction.member!.user.username}#${interaction.member!.user.discriminator}`)
+							.replaceAll("{{avatar}}", avatar),
 					),
 				);
 			} catch (error) {

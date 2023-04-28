@@ -95,6 +95,7 @@ model WelcomeMessage {
     guildId   String
     channelId String
     embedName String
+    expiry    Int?
 
     @@map("welcome_messages")
 }

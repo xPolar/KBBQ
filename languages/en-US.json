@@ -230,6 +230,8 @@
 	"WELCOME_MESSAGE_CREATE_SUB_COMMAND_CHANNEL_DESCRIPTION": "The channel to send the welcome message in.",
 	"WELCOME_MESSAGE_CREATE_SUB_COMMAND_EMBED_NAME": "embed",
 	"WELCOME_MESSAGE_CREATE_SUB_COMMAND_EMBED_DESCRIPTION": "The embed to send when a user joins the server.",
+	"WELCOME_MESSAGE_CREATE_SUB_COMMAND_DELETE_AFTER_NAME": "delete_after",
+	"WELCOME_MESSAGE_CREATE_SUB_COMMAND_DELETE_AFTER_DESCRIPTION": "The amount of time to wait before deleting the welcome message. For example: \"5m 30s\"",
 	"WELCOME_MESSAGE_REMOVE_SUB_COMMAND_NAME": "remove",
 	"WELCOME_MESSAGE_REMOVE_SUB_COMMAND_DESCRIPTION": "Remove a welcome message.",
 	"WELCOME_MESSAGE_REMOVE_SUB_COMMAND_WELCOME_MESSAGE_NAME": "welcome_message",
