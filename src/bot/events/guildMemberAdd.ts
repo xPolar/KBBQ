@@ -57,12 +57,22 @@ export default class GuildDelete extends EventHandler {
 					currentActionRow = [];
 				}
 
-				currentActionRow.push({
+				const currentComponent = {
 					style: ButtonStyle.Link,
 					type: ComponentType.Button,
 					label: messageComponent.label,
 					url: messageComponent.url,
-				});
+				} as APIButtonComponent;
+
+				if (messageComponent.emojiName) {
+					currentComponent.emoji = {
+						name: messageComponent.emojiName!,
+					};
+
+					if (messageComponent.emojiType === "CUSTOM") currentComponent.emoji.id = messageComponent.emojiId!;
+				}
+
+				currentActionRow.push(currentComponent);
 
 				index++;
 			}

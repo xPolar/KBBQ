@@ -14,6 +14,11 @@ enum CommandType {
     APPLICATION_COMMAND
 }
 
+enum EmojiType {
+    CUSTOM
+    DEFAULT
+}
+
 model Cooldown {
     userId      String
     commandName String
@@ -66,11 +71,14 @@ model Embed {
 }
 
 model MessageComponent {
-    id       String @id @default(cuid())
-    guildId  String
-    url      String
-    label    String
-    position Int
+    id        String     @id @default(cuid())
+    guildId   String
+    url       String
+    label     String
+    position  Int
+    emojiName String?
+    emojiId   String?
+    emojiType EmojiType?
 
     embedName String
     embed     Embed  @relation(fields: [embedName, guildId], references: [embedName, guildId])
@@ -97,5 +105,6 @@ model WelcomeMessage {
     embedName String
     expiry    Int?
 
+    @@unique([guildId, channelId, embedName])
     @@map("welcome_messages")
 }

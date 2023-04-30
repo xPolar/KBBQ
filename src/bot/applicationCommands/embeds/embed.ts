@@ -3,6 +3,7 @@ import type {
 	APIApplicationCommandInteraction,
 	APIButtonComponent,
 	RESTPostAPIChannelMessageJSONBody,
+	APIPartialEmoji,
 } from "@discordjs/core";
 import {
 	ChannelType,
@@ -15,6 +16,7 @@ import {
 	ComponentType,
 } from "@discordjs/core";
 import { DiscordAPIError } from "@discordjs/rest";
+import type { EmojiType } from "@prisma/client";
 import ApplicationCommand from "../../../../lib/classes/ApplicationCommand.js";
 import type Language from "../../../../lib/classes/Language.js";
 import type ExtendedClient from "../../../../lib/extensions/ExtendedClient.js";
@@ -125,6 +127,19 @@ export default class Embeds extends ApplicationCommand {
 										),
 										type: ApplicationCommandOptionType.String,
 										required: true,
+									},
+									{
+										name: client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_EMOJI_NAME"),
+										description: client.languageHandler.defaultLanguage!.get(
+											"EMBED_BUTTONS_ADD_SUB_COMMAND_EMOJI_DESCRIPTION",
+										),
+										name_localizations: client.languageHandler.getFromAllLanguages(
+											"EMBED_BUTTONS_ADD_SUB_COMMAND_EMOJI_NAME",
+										),
+										description_localizations: client.languageHandler.getFromAllLanguages(
+											"EMBED_BUTTONS_ADD_SUB_COMMAND_EMOJI_DESCRIPTION",
+										),
+										type: ApplicationCommandOptionType.String,
 									},
 								],
 							},
@@ -309,6 +324,69 @@ export default class Embeds extends ApplicationCommand {
 						this.client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_URL_NAME")
 					]!.value;
 
+				const emoji =
+					interaction.arguments.strings![
+						this.client.languageHandler.defaultLanguage!.get("EMBED_BUTTONS_ADD_SUB_COMMAND_EMOJI_NAME")
+					]?.value;
+
+				let emojiObject = {} as APIPartialEmoji & {
+					type: EmojiType;
+				};
+
+				if (emoji) {
+					const customEmojiMatch = /^<a?:(?<name>\w+):(?<id>\d+)>$/.exec(emoji);
+
+					if (customEmojiMatch) {
+						const response = await fetch(
+							`https://discord.storage.googleapis.com/emojis/${customEmojiMatch.groups!.id}`,
+						);
+
+						if ([404, 500].includes(response.status))
+							return this.client.api.interactions.reply(interaction.id, interaction.token, {
+								embeds: [
+									{
+										title: language.get("INVALID_ARGUMENT_TITLE"),
+										description: language.get("INVALID_ARGUMENT_EMOJI_DESCRIPTION"),
+										color: this.client.config.colors.error,
+									},
+								],
+								flags: MessageFlags.Ephemeral,
+								allowed_mentions: { parse: [] },
+							});
+
+						emojiObject = {
+							id: customEmojiMatch.groups!.id!,
+							name: customEmojiMatch.groups!.name!,
+							animated: emoji.startsWith("<a:"),
+							type: "CUSTOM",
+						};
+					} else {
+						const defaultEmojiMatch =
+							/[\u{1F300}-\u{1F5FF}\u{1F900}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F171}\u{1F17E}-\u{1F17F}\u{1F18E}\u{3030}\u{2B50}\u{2B55}\u{2934}-\u{2935}\u{2B05}-\u{2B07}\u{2B1B}-\u{2B1C}\u{3297}\u{3299}\u{303D}\u{00A9}\u{00AE}\u{2122}\u{23F3}\u{24C2}\u{23E9}-\u{23EF}\u{25B6}\u{23F8}-\u{23FA}]/gu.exec(
+								emoji,
+							);
+
+						if (!defaultEmojiMatch)
+							return this.client.api.interactions.reply(interaction.id, interaction.token, {
+								embeds: [
+									{
+										title: language.get("INVALID_ARGUMENT_TITLE"),
+										description: language.get("INVALID_ARGUMENT_EMOJI_DESCRIPTION"),
+										color: this.client.config.colors.error,
+									},
+								],
+								flags: MessageFlags.Ephemeral,
+								allowed_mentions: { parse: [] },
+							});
+
+						emojiObject = {
+							id: null,
+							name: emoji,
+							type: "DEFAULT",
+						};
+					}
+				}
+
 				return Promise.all([
 					this.client.prisma.messageComponent.create({
 						data: {
@@ -317,6 +395,9 @@ export default class Embeds extends ApplicationCommand {
 							label: buttonLabel,
 							url: buttonURL,
 							position: (embed.messageComponents.length as number) + 1,
+							emojiId: emojiObject.id,
+							emojiName: emojiObject.name,
+							emojiType: emojiObject.type,
 						},
 					}),
 					this.client.api.interactions.reply(interaction.id, interaction.token, {
@@ -491,12 +572,22 @@ export default class Embeds extends ApplicationCommand {
 					currentActionRow = [];
 				}
 
-				currentActionRow.push({
+				const currentComponent = {
 					style: ButtonStyle.Link,
 					type: ComponentType.Button,
 					label: messageComponent.label,
 					url: messageComponent.url,
-				});
+				} as APIButtonComponent;
+
+				if (messageComponent.emojiName) {
+					currentComponent.emoji = {
+						name: messageComponent.emojiName!,
+					};
+
+					if (messageComponent.emojiType === "CUSTOM") currentComponent.emoji.id = messageComponent.emojiId!;
+				}
+
+				currentActionRow.push(currentComponent);
 
 				index++;
 			}

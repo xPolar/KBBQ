@@ -172,6 +172,8 @@
 	"EMBED_BUTTONS_ADD_SUB_COMMAND_LABEL_DESCRIPTION": "The label of the button we want to add.",
 	"EMBED_BUTTONS_ADD_SUB_COMMAND_URL_NAME": "url",
 	"EMBED_BUTTONS_ADD_SUB_COMMAND_URL_DESCRIPTION": "The URL of the button we want to add.",
+	"EMBED_BUTTONS_ADD_SUB_COMMAND_EMOJI_NAME": "emoji",
+	"EMBED_BUTTONS_ADD_SUB_COMMAND_EMOJI_DESCRIPTION": "The emoji of the button we want to add.",
 	"EMBED_BUTTONS_REMOVE_SUB_COMMAND_NAME": "remove",
 	"EMBED_BUTTONS_REMOVE_SUB_COMMAND_DESCRIPTION": "Remove a button from an embed.",
 	"EMBED_BUTTONS_REMOVE_SUB_COMMAND_EMBED_NAME": "embed",
@@ -194,6 +196,7 @@
 	"EMBED_BUTTON_ADDED_DESCRIPTION": "I have added the button with a label of: \"{{buttonLabel}}\" to the embed `{{embedName}}`!",
 	"EMBED_BUTTON_REMOVED_TITLE": "Button Successfully Removed",
 	"EMBED_BUTTON_REMOVED_DESCRIPTION": "I have successfully removed the button for you!",
+	"INVALID_ARGUMENT_EMOJI_DESCRIPTION": "Please provide a valid emoji, make sure it is either a default Discord emoji or one from a server that I am also in!",
 
 	"STATUS_ROLE_COMMAND_NAME": "status_role",
 	"STATUS_ROLE_COMMAND_DESCRIPTION": "Manage the status roles of this server.",
