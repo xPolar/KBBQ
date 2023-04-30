@@ -1,5 +1,13 @@
-import type { APIGuildMember, APIRole, GatewayPresenceUpdateDispatchData, WithIntrinsicProps } from "@discordjs/core";
-import { RESTJSONErrorCodes, ActivityType, GatewayDispatchEvents } from "@discordjs/core";
+import type {
+	APIActionRowComponent,
+	APIButtonComponent,
+	APIGuildMember,
+	APIRole,
+	GatewayPresenceUpdateDispatchData,
+	RESTPostAPIChannelMessageJSONBody,
+	WithIntrinsicProps,
+} from "@discordjs/core";
+import { ButtonStyle, ComponentType, RESTJSONErrorCodes, ActivityType, GatewayDispatchEvents } from "@discordjs/core";
 import { DiscordAPIError } from "@discordjs/rest";
 import type { Embed } from "@prisma/client";
 import EventHandler from "../../../lib/classes/EventHandler.js";
@@ -189,9 +197,60 @@ export default class PresenceUpdate extends EventHandler {
 				return messagePayloads.map(async (messagePayload) => {
 					if ((this.lastSentCache[messagePayload.embedName]?.[data.user.id] ?? 0) > Date.now()) return;
 
+					const messageComponents = await this.client.prisma.messageComponent.findMany({
+						where: { embedName: messagePayload.embedName, guildId: data.guild_id },
+						orderBy: { position: "asc" },
+					});
+
+					const actionRows: APIActionRowComponent<APIButtonComponent>[] = [];
+					let currentActionRow: APIButtonComponent[] = [];
+
+					let index = 0;
+
+					for (const messageComponent of messageComponents) {
+						if (index !== 0 && index % 5 === 0) {
+							actionRows.push({
+								components: currentActionRow,
+								type: ComponentType.ActionRow,
+							});
+
+							currentActionRow = [];
+						}
+
+						const currentComponent = {
+							style: ButtonStyle.Link,
+							type: ComponentType.Button,
+							label: messageComponent.label,
+							url: messageComponent.url,
+						} as APIButtonComponent;
+
+						if (messageComponent.emojiName) {
+							currentComponent.emoji = {
+								name: messageComponent.emojiName!,
+							};
+
+							if (messageComponent.emojiType === "CUSTOM") currentComponent.emoji.id = messageComponent.emojiId!;
+						}
+
+						currentActionRow.push(currentComponent);
+
+						index++;
+					}
+
+					if (currentActionRow.length !== 0)
+						actionRows.push({
+							components: currentActionRow,
+							type: ComponentType.ActionRow,
+						});
+
 					try {
 						await this.client.api.channels.createMessage(channelId, {
-							...JSON.parse(JSON.stringify(messagePayload.messagePayload).replaceAll("{{user}}", `<@${data.user.id}>`)),
+							...JSON.parse(
+								JSON.stringify({
+									...(messagePayload.messagePayload as RESTPostAPIChannelMessageJSONBody),
+									components: actionRows,
+								} as RESTPostAPIChannelMessageJSONBody).replaceAll("{{user}}", `<@${data.user.id}>`),
+							),
 							allowed_mentions: { parse: [], users: [data.user.id] },
 						});
 
