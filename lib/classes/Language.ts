@@ -1,6 +1,6 @@
 import type { LocaleString } from "@discordjs/core";
 import type { TOptions } from "i18next";
-import * as enUS from "../../languages/en-US.json" assert { type: "json" };
+import enUS from "../../languages/en-US.js";
 import type { LanguageValues } from "../../typings/language";
 import type ExtendedClient from "../extensions/ExtendedClient.js";
 

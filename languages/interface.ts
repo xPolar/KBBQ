@@ -1,6 +1,5 @@
-import { readFileSync, writeFile } from "node:fs";
-
-const enUS: Record<string, string> = JSON.parse(readFileSync("./languages/en-US.json").toString());
+import { writeFile } from "node:fs";
+import enUS from "./en-US.js";
 
 const interfaceMap = new Map<string, string[]>();
 
