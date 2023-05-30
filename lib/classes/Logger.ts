@@ -1,5 +1,4 @@
 import process from "node:process";
-import { format } from "node:util";
 import type { RESTPostAPIWebhookWithTokenJSONBody } from "@discordjs/core";
 import { bgGreenBright, bgMagentaBright, bgRedBright, bgYellowBright, bold } from "colorette";
 import init from "../utilities/sentry.js";
@@ -39,8 +38,8 @@ export class Logger {
 	 *
 	 * @param args The arguments to log out.
 	 */
-	public debug(...args: any | string): void {
-		console.log(bold(bgMagentaBright(`[${this.timestamp}]`)), bold(format(...args)));
+	public debug(...args: any[]): void {
+		console.log(bold(bgMagentaBright(`[${this.timestamp}]`)), bold(args.join(" ")));
 	}
 
 	/**
@@ -48,8 +47,8 @@ export class Logger {
 	 *
 	 * @param args The arguments to log out.
 	 */
-	public info(...args: any | string): void {
-		console.log(bold(bgGreenBright(`[${this.timestamp}]`)), bold(format(...args)));
+	public info(...args: any[]): void {
+		console.log(bold(bgGreenBright(`[${this.timestamp}]`)), bold(args.join(" ")));
 	}
 
 	/**
@@ -57,8 +56,8 @@ export class Logger {
 	 *
 	 * @param args The arguments to log out.
 	 */
-	public warn(...args: any | string): void {
-		console.log(bold(bgYellowBright(`[${this.timestamp}]`)), bold(format(...args)));
+	public warn(...args: any[]): void {
+		console.log(bold(bgYellowBright(`[${this.timestamp}]`)), bold(args.join(" ")));
 	}
 
 	/**
@@ -67,9 +66,9 @@ export class Logger {
 	 * @param error The error to log out.
 	 * @param args The arguments to log out.
 	 */
-	public error(error: any | null, ...args: any | string): void {
-		if (error) console.log(bold(bgRedBright(`[${this.timestamp}]`)), error, bold(format(...args)));
-		else console.log(bold(bgRedBright(`[${this.timestamp}]`)), bold(format(...args)));
+	public error(error: any | null, ...args: any[]): void {
+		if (error) console.log(bold(bgRedBright(`[${this.timestamp}]`)), error, bold(args.join(" ")));
+		else console.log(bold(bgRedBright(`[${this.timestamp}]`)), bold(args.join(" ")));
 	}
 
 	/**
