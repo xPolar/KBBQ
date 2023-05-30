@@ -1,3 +1,6 @@
+// eslint-disable-next-line no-warning-comments
+// TODO: Fix this file, it's a mess
+
 import type {
 	APIActionRowComponent,
 	APIButtonComponent,
@@ -37,7 +40,6 @@ export default class PresenceUpdate extends EventHandler {
 		const customActivity = data.activities?.find((activity) => activity.type === ActivityType.Custom);
 
 		if (cachedUserPresence && !customActivity?.state?.length) {
-			this.client.logger.debug(1);
 			cachedPresencesInGuild.delete(data.user.id);
 			this.client.guildPresenceCache.set(data.guild_id, cachedPresencesInGuild);
 
@@ -48,8 +50,6 @@ export default class PresenceUpdate extends EventHandler {
 			const statusRoles = await this.client.prisma.statusRole.findMany({ where: { guildId: data.guild_id } });
 
 			if (!statusRoles.length) return;
-
-			this.client.logger.debug(2);
 
 			for (const statusRole of statusRoles) {
 				const validRole = rolesInGuild.get(statusRole.roleId);
@@ -64,20 +64,16 @@ export default class PresenceUpdate extends EventHandler {
 
 			if (!validStatusRoleIds.size) return;
 
-			this.client.logger.debug(3);
-
 			let member: APIGuildMember;
 
 			try {
-				member = await this.client.api.guilds.getMember(data.guild_id, data.user.id);
+				// eslint-disable-next-line no-warning-comments
+				member = await this.client.api.guilds.getMember(data.guild_id, data.user.id); // TODO: Fetching EVERY time is inefficient, we fetch members tens of times a minute, see if we can fix this
 			} catch (error) {
 				if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember) return;
 
-				this.client.logger.debug(4);
 				throw error;
 			}
-
-			this.client.logger.debug(5);
 
 			const newRoles = member.roles.filter((roleId) => !validStatusRoleIds.has(roleId));
 
