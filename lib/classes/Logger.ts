@@ -41,7 +41,7 @@ export class Logger {
 	public debug(...args: any[]): void {
 		console.log(
 			bold(bgMagentaBright(`[${this.timestamp}]`)),
-			bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg))).join(" ")),
+			bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg, null, 4))).join(" ")),
 		);
 	}
 
@@ -53,7 +53,7 @@ export class Logger {
 	public info(...args: any[]): void {
 		console.log(
 			bold(bgGreenBright(`[${this.timestamp}]`)),
-			bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg))).join(" ")),
+			bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg, null, 4))).join(" ")),
 		);
 	}
 
@@ -65,7 +65,7 @@ export class Logger {
 	public warn(...args: any[]): void {
 		console.log(
 			bold(bgYellowBright(`[${this.timestamp}]`)),
-			bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg))).join(" ")),
+			bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg, null, 4))).join(" ")),
 		);
 	}
 
@@ -80,12 +80,12 @@ export class Logger {
 			console.log(
 				bold(bgRedBright(`[${this.timestamp}]`)),
 				error,
-				bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg))).join(" ")),
+				bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg, null, 4))).join(" ")),
 			);
 		else
 			console.log(
 				bold(bgRedBright(`[${this.timestamp}]`)),
-				bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg))).join(" ")),
+				bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg, null, 4))).join(" ")),
 			);
 	}
 

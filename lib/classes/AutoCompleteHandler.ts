@@ -61,7 +61,7 @@ export default class AutoCompleteHandler {
 	 * @returns The auto complete with the specified name within the accepts field, otherwise undefined.
 	 */
 	private getAutoComplete(name: string) {
-		this.client.logger.debug(-8, name, this.client.autoCompletes.values());
+		this.client.logger.debug(-8, name, this.client.autoCompletes);
 
 		return [...this.client.autoCompletes.values()].find((autoComplete) => autoComplete.accepts.includes(name));
 	}
