@@ -31,8 +31,6 @@ export default class PresenceUpdate extends EventHandler {
 	 * https://discord.com/developers/docs/topics/gateway-events#presence-update
 	 */
 	public override async run({ data }: WithIntrinsicProps<GatewayPresenceUpdateDispatchData>) {
-		this.client.logger.debug(0);
-
 		const cachedPresencesInGuild = this.client.guildPresenceCache.get(data.guild_id) ?? new Map<string, string>();
 		const cachedUserPresence = cachedPresencesInGuild.get(data.user.id);
 
@@ -113,14 +111,10 @@ export default class PresenceUpdate extends EventHandler {
 
 		if (!customActivity?.state) return;
 
-		this.client.logger.debug(9);
-
 		cachedPresencesInGuild.set(data.user.id, customActivity.state);
 		this.client.guildPresenceCache.set(data.guild_id, cachedPresencesInGuild);
 
 		if (cachedUserPresence === customActivity.state) return;
-
-		this.client.logger.debug(10);
 
 		const rolesInGuild = this.client.guildRolesCache.get(data.guild_id) ?? new Map<string, APIRole>();
 
@@ -129,11 +123,10 @@ export default class PresenceUpdate extends EventHandler {
 
 		let removeOldRoles = false;
 
-		const statusRoles = await this.client.prisma.statusRole.findMany({ where: { guildId: data.guild_id } });
+		// eslint-disable-next-line no-warning-comments
+		const statusRoles = await this.client.prisma.statusRole.findMany({ where: { guildId: data.guild_id } }); // TODO: Cache this, currently we are doing a query for EVERY time that someone sets a custom presence that isn't cached. (This is hundreds to thousands a minute)
 
 		if (!statusRoles.length) return;
-
-		this.client.logger.debug(11);
 
 		const messagesToSend: Record<string, Embed[]> = {};
 
