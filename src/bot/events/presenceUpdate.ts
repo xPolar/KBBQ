@@ -79,8 +79,6 @@ export default class PresenceUpdate extends EventHandler {
 
 			if (newRoles.length === member.roles.length) return;
 
-			this.client.logger.debug(6);
-
 			try {
 				await this.client.api.guilds.editMember(data.guild_id, data.user.id, {
 					roles: member.roles.filter((roleId) => !validStatusRoleIds.has(roleId)),
@@ -90,16 +88,12 @@ export default class PresenceUpdate extends EventHandler {
 					`User ${data.user.id} cleared their status, their status was previously ${cachedUserPresence}.`,
 				);
 
-				this.client.logger.debug(7);
-
 				return;
 			} catch (error) {
 				if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions) {
 					this.client.logger.error(`Missing permissions to edit roles for guild ${data.guild_id}`);
 					return;
 				}
-
-				this.client.logger.debug(8);
 
 				throw error;
 			}
@@ -158,18 +152,12 @@ export default class PresenceUpdate extends EventHandler {
 
 		if (!validStatusRoleIds.size || (!rolesIdsToAdd.size && !removeOldRoles)) return;
 
-		this.client.logger.debug(12);
-
 		let member: APIGuildMember;
 
 		try {
 			member = await this.client.api.guilds.getMember(data.guild_id, data.user.id);
-
-			this.client.logger.debug(13);
 		} catch (error) {
 			if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember) return;
-
-			this.client.logger.debug(14);
 
 			throw error;
 		}
@@ -188,15 +176,11 @@ export default class PresenceUpdate extends EventHandler {
 					rolesIdsToAdd.size ? `, then I added the following roles: ${[...rolesIdsToAdd].map((roleId) => roleId)}` : `.`
 				}`,
 			);
-
-			this.client.logger.debug(15);
 		} catch (error) {
 			if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions) {
 				this.client.logger.error(`Missing permissions to edit roles for guild ${data.guild_id}`);
 				return;
 			}
-
-			this.client.logger.debug(16);
 
 			throw error;
 		}
@@ -212,8 +196,6 @@ export default class PresenceUpdate extends EventHandler {
 				memberRoles.every((role, index) => role === newMemberRoles[index]))
 		)
 			return;
-
-		this.client.logger.debug(17, messagesToSend);
 
 		return Promise.all(
 			Object.entries(messagesToSend).flatMap(([channelId, messagePayloads]) => {
@@ -267,8 +249,6 @@ export default class PresenceUpdate extends EventHandler {
 						});
 
 					try {
-						console.log(messagePayload); // @ts-expect-error
-						this.client.logger.debug(18, messagePayload.messagePayload?.embeds, actionRows);
 						await this.client.api.channels.createMessage(channelId, {
 							...JSON.parse(
 								JSON.stringify({
@@ -278,6 +258,16 @@ export default class PresenceUpdate extends EventHandler {
 							),
 							allowed_mentions: { parse: [], users: [data.user.id] },
 						});
+
+						const a = {
+							embeds: [
+								{
+									title: "Thank you for supporting KBBQ!",
+									description:
+										"For supporting KBBQ and adding **.gg/call** to your status, you now have pic perms in <#803534745068896286> <:KBBQ_flustered:1093988334440808660>",
+								},
+							],
+						};
 
 						if (!this.lastSentCache[messagePayload.embedName]) this.lastSentCache[messagePayload.embedName] = {};
 						this.lastSentCache[messagePayload.embedName]![data.user.id] = Date.now() + 24 * 60 * 60 * 1_000;
