@@ -39,7 +39,10 @@ export class Logger {
 	 * @param args The arguments to log out.
 	 */
 	public debug(...args: any[]): void {
-		console.log(bold(bgMagentaBright(`[${this.timestamp}]`)), bold(args.join(" ")));
+		console.log(
+			bold(bgMagentaBright(`[${this.timestamp}]`)),
+			bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg))).join(" ")),
+		);
 	}
 
 	/**
@@ -48,7 +51,10 @@ export class Logger {
 	 * @param args The arguments to log out.
 	 */
 	public info(...args: any[]): void {
-		console.log(bold(bgGreenBright(`[${this.timestamp}]`)), bold(args.join(" ")));
+		console.log(
+			bold(bgGreenBright(`[${this.timestamp}]`)),
+			bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg))).join(" ")),
+		);
 	}
 
 	/**
@@ -57,7 +63,10 @@ export class Logger {
 	 * @param args The arguments to log out.
 	 */
 	public warn(...args: any[]): void {
-		console.log(bold(bgYellowBright(`[${this.timestamp}]`)), bold(args.join(" ")));
+		console.log(
+			bold(bgYellowBright(`[${this.timestamp}]`)),
+			bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg))).join(" ")),
+		);
 	}
 
 	/**
@@ -67,8 +76,17 @@ export class Logger {
 	 * @param args The arguments to log out.
 	 */
 	public error(error: any | null, ...args: any[]): void {
-		if (error) console.log(bold(bgRedBright(`[${this.timestamp}]`)), error, bold(args.join(" ")));
-		else console.log(bold(bgRedBright(`[${this.timestamp}]`)), bold(args.join(" ")));
+		if (error)
+			console.log(
+				bold(bgRedBright(`[${this.timestamp}]`)),
+				error,
+				bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg))).join(" ")),
+			);
+		else
+			console.log(
+				bold(bgRedBright(`[${this.timestamp}]`)),
+				bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg))).join(" ")),
+			);
 	}
 
 	/**
