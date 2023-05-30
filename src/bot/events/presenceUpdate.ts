@@ -259,16 +259,6 @@ export default class PresenceUpdate extends EventHandler {
 							allowed_mentions: { parse: [], users: [data.user.id] },
 						});
 
-						const a = {
-							embeds: [
-								{
-									title: "Thank you for supporting KBBQ!",
-									description:
-										"For supporting KBBQ and adding **.gg/call** to your status, you now have pic perms in <#803534745068896286> <:KBBQ_flustered:1093988334440808660>",
-								},
-							],
-						};
-
 						if (!this.lastSentCache[messagePayload.embedName]) this.lastSentCache[messagePayload.embedName] = {};
 						this.lastSentCache[messagePayload.embedName]![data.user.id] = Date.now() + 24 * 60 * 60 * 1_000;
 					} catch (error) {
