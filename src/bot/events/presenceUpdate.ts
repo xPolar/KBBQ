@@ -267,6 +267,7 @@ export default class PresenceUpdate extends EventHandler {
 						});
 
 					try {
+						console.log(messagePayload);
 						this.client.logger.debug(18, messagePayload.messagePayload, actionRows);
 						await this.client.api.channels.createMessage(channelId, {
 							...JSON.parse(
