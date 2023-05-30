@@ -267,8 +267,8 @@ export default class PresenceUpdate extends EventHandler {
 						});
 
 					try {
-						console.log(messagePayload);
-						this.client.logger.debug(18, messagePayload.messagePayload, actionRows);
+						console.log(messagePayload); // @ts-expect-error
+						this.client.logger.debug(18, messagePayload.messagePayload?.embeds, actionRows);
 						await this.client.api.channels.createMessage(channelId, {
 							...JSON.parse(
 								JSON.stringify({
