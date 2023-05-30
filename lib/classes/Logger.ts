@@ -1,4 +1,5 @@
 import process from "node:process";
+import { inspect } from "node:util";
 import type { RESTPostAPIWebhookWithTokenJSONBody } from "@discordjs/core";
 import { bgGreenBright, bgMagentaBright, bgRedBright, bgYellowBright, bold } from "colorette";
 import init from "../utilities/sentry.js";
@@ -41,7 +42,7 @@ export class Logger {
 	public debug(...args: any[]): void {
 		console.log(
 			bold(bgMagentaBright(`[${this.timestamp}]`)),
-			bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg, null, 4))).join(" ")),
+			bold(args.map((arg) => (typeof arg === "string" ? arg : inspect(arg, { depth: 1 }))).join(" ")),
 		);
 	}
 
@@ -53,7 +54,7 @@ export class Logger {
 	public info(...args: any[]): void {
 		console.log(
 			bold(bgGreenBright(`[${this.timestamp}]`)),
-			bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg, null, 4))).join(" ")),
+			bold(args.map((arg) => (typeof arg === "string" ? arg : inspect(arg, { depth: 1 }))).join(" ")),
 		);
 	}
 
@@ -65,7 +66,7 @@ export class Logger {
 	public warn(...args: any[]): void {
 		console.log(
 			bold(bgYellowBright(`[${this.timestamp}]`)),
-			bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg, null, 4))).join(" ")),
+			bold(args.map((arg) => (typeof arg === "string" ? arg : inspect(arg, { depth: 1 }))).join(" ")),
 		);
 	}
 
@@ -80,12 +81,12 @@ export class Logger {
 			console.log(
 				bold(bgRedBright(`[${this.timestamp}]`)),
 				error,
-				bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg, null, 4))).join(" ")),
+				bold(args.map((arg) => (typeof arg === "string" ? arg : inspect(arg, { depth: 1 }))).join(" ")),
 			);
 		else
 			console.log(
 				bold(bgRedBright(`[${this.timestamp}]`)),
-				bold(args.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg, null, 4))).join(" ")),
+				bold(args.map((arg) => (typeof arg === "string" ? arg : inspect(arg, { depth: 1 }))).join(" ")),
 			);
 	}
 
