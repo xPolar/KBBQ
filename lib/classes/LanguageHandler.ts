@@ -39,8 +39,6 @@ export default class LanguageHandler {
 		for (const fileName of this.client.functions.getFiles(`${this.client.__dirname}/dist/languages/`, ".js")) {
 			const languageFile: LanguageOptions = await import(`../../languages/${fileName}`).then((file) => file.default);
 
-			this.client.logger.debug(languageFile);
-
 			const language: Language = new Language(this.client, languageFile.LANGUAGE_ID! as LocaleString, {
 				enabled: languageFile.LANGUAGE_ENABLED!,
 				language: languageFile,

@@ -31,12 +31,15 @@ export default class PresenceUpdate extends EventHandler {
 	 * https://discord.com/developers/docs/topics/gateway-events#presence-update
 	 */
 	public override async run({ data }: WithIntrinsicProps<GatewayPresenceUpdateDispatchData>) {
+		this.client.logger.debug(0);
+
 		const cachedPresencesInGuild = this.client.guildPresenceCache.get(data.guild_id) ?? new Map<string, string>();
 		const cachedUserPresence = cachedPresencesInGuild.get(data.user.id);
 
 		const customActivity = data.activities?.find((activity) => activity.type === ActivityType.Custom);
 
 		if (cachedUserPresence && !customActivity?.state?.length) {
+			this.client.logger.debug(1);
 			cachedPresencesInGuild.delete(data.user.id);
 			this.client.guildPresenceCache.set(data.guild_id, cachedPresencesInGuild);
 
@@ -47,6 +50,8 @@ export default class PresenceUpdate extends EventHandler {
 			const statusRoles = await this.client.prisma.statusRole.findMany({ where: { guildId: data.guild_id } });
 
 			if (!statusRoles.length) return;
+
+			this.client.logger.debug(2);
 
 			for (const statusRole of statusRoles) {
 				const validRole = rolesInGuild.get(statusRole.roleId);
@@ -61,6 +66,8 @@ export default class PresenceUpdate extends EventHandler {
 
 			if (!validStatusRoleIds.size) return;
 
+			this.client.logger.debug(3);
+
 			let member: APIGuildMember;
 
 			try {
@@ -68,12 +75,17 @@ export default class PresenceUpdate extends EventHandler {
 			} catch (error) {
 				if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember) return;
 
+				this.client.logger.debug(4);
 				throw error;
 			}
+
+			this.client.logger.debug(5);
 
 			const newRoles = member.roles.filter((roleId) => !validStatusRoleIds.has(roleId));
 
 			if (newRoles.length === member.roles.length) return;
+
+			this.client.logger.debug(6);
 
 			try {
 				await this.client.api.guilds.editMember(data.guild_id, data.user.id, {
@@ -84,6 +96,8 @@ export default class PresenceUpdate extends EventHandler {
 					`User ${data.user.id} cleared their status, their status was previously ${cachedUserPresence}.`,
 				);
 
+				this.client.logger.debug(7);
+
 				return;
 			} catch (error) {
 				if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions) {
@@ -91,16 +105,22 @@ export default class PresenceUpdate extends EventHandler {
 					return;
 				}
 
+				this.client.logger.debug(8);
+
 				throw error;
 			}
 		}
 
 		if (!customActivity?.state) return;
 
+		this.client.logger.debug(9);
+
 		cachedPresencesInGuild.set(data.user.id, customActivity.state);
 		this.client.guildPresenceCache.set(data.guild_id, cachedPresencesInGuild);
 
 		if (cachedUserPresence === customActivity.state) return;
+
+		this.client.logger.debug(10);
 
 		const rolesInGuild = this.client.guildRolesCache.get(data.guild_id) ?? new Map<string, APIRole>();
 
@@ -112,6 +132,8 @@ export default class PresenceUpdate extends EventHandler {
 		const statusRoles = await this.client.prisma.statusRole.findMany({ where: { guildId: data.guild_id } });
 
 		if (!statusRoles.length) return;
+
+		this.client.logger.debug(11);
 
 		const messagesToSend: Record<string, Embed[]> = {};
 
@@ -147,12 +169,18 @@ export default class PresenceUpdate extends EventHandler {
 
 		if (!validStatusRoleIds.size || (!rolesIdsToAdd.size && !removeOldRoles)) return;
 
+		this.client.logger.debug(12);
+
 		let member: APIGuildMember;
 
 		try {
 			member = await this.client.api.guilds.getMember(data.guild_id, data.user.id);
+
+			this.client.logger.debug(13);
 		} catch (error) {
 			if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.UnknownMember) return;
+
+			this.client.logger.debug(14);
 
 			throw error;
 		}
@@ -171,11 +199,15 @@ export default class PresenceUpdate extends EventHandler {
 					rolesIdsToAdd.size ? `, then I added the following roles: ${[...rolesIdsToAdd].map((roleId) => roleId)}` : `.`
 				}`,
 			);
+
+			this.client.logger.debug(15);
 		} catch (error) {
 			if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingPermissions) {
 				this.client.logger.error(`Missing permissions to edit roles for guild ${data.guild_id}`);
 				return;
 			}
+
+			this.client.logger.debug(16);
 
 			throw error;
 		}
@@ -191,6 +223,8 @@ export default class PresenceUpdate extends EventHandler {
 				memberRoles.every((role, index) => role === newMemberRoles[index]))
 		)
 			return;
+
+		this.client.logger.debug(17, messagesToSend);
 
 		return Promise.all(
 			Object.entries(messagesToSend).flatMap(([channelId, messagePayloads]) => {
@@ -244,7 +278,7 @@ export default class PresenceUpdate extends EventHandler {
 						});
 
 					try {
-						this.client.logger.debug(0, messagePayload, actionRows);
+						this.client.logger.debug(18, messagePayload, actionRows);
 						await this.client.api.channels.createMessage(channelId, {
 							...JSON.parse(
 								JSON.stringify({

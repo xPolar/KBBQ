@@ -163,13 +163,6 @@ export default class WelcomeMessage extends ApplicationCommand {
 				]?.value ?? "null",
 			);
 
-			this.client.logger.debug(
-				interaction.arguments.strings![
-					this.client.languageHandler.defaultLanguage!.get("WELCOME_MESSAGE_CREATE_SUB_COMMAND_DELETE_AFTER_NAME")
-				]?.value ?? "null",
-				expiry,
-			);
-
 			return Promise.all([
 				this.client.prisma.welcomeMessage.create({
 					data: {
