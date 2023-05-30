@@ -61,6 +61,8 @@ export default class AutoCompleteHandler {
 	 * @returns The auto complete with the specified name within the accepts field, otherwise undefined.
 	 */
 	private getAutoComplete(name: string) {
+		this.client.logger.debug(-8);
+
 		return [...this.client.autoCompletes.values()].find((autoComplete) => autoComplete.accepts.includes(name));
 	}
 
@@ -90,6 +92,8 @@ export default class AutoCompleteHandler {
 		} as InteractionArguments;
 
 		let parentOptions = interaction.data.options ?? [];
+
+		this.client.logger.debug(-7);
 
 		while (parentOptions.length) {
 			const currentOption = parentOptions.pop();
@@ -132,8 +136,12 @@ export default class AutoCompleteHandler {
 
 		const interactionWithArguments = { ...interaction, arguments: applicationCommandArguments };
 
+		this.client.logger.debug(-6);
+
 		const autoComplete = this.getAutoComplete(name.filter(Boolean).join("-"));
 		if (!autoComplete) return;
+
+		this.client.logger.debug(-5);
 
 		const userLanguage = await this.client.prisma.userLanguage.findUnique({
 			where: { userId: (interaction.member?.user ?? interaction.user!).id },
@@ -144,6 +152,8 @@ export default class AutoCompleteHandler {
 			name: name.join("-"),
 			shard: shardId.toString(),
 		});
+
+		this.client.logger.debug(-4);
 
 		return this.runAutoComplete(autoComplete, interactionWithArguments, language, shardId);
 	}
@@ -161,6 +171,8 @@ export default class AutoCompleteHandler {
 		language: Language,
 		shardId: number,
 	) {
+		this.client.logger.debug(-3);
+
 		await autoComplete.run({ interaction, language, shardId }).catch(async (error) => {
 			this.client.logger.error(error);
 

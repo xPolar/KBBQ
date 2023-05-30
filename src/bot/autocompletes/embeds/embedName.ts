@@ -37,11 +37,17 @@ export default class EmbedName extends AutoComplete {
 		language: Language;
 		shardId: number;
 	}) {
+		this.client.logger.debug(-2);
+
 		const currentValue = interaction.arguments.focused as APIApplicationCommandInteractionDataStringOption;
+
+		this.client.logger.debug(-1);
 
 		const embeds = await this.client.prisma.embed.findMany({
 			where: { embedName: { contains: currentValue.value }, guildId: interaction.guild_id! },
 		});
+
+		this.client.logger.debug(0, embeds);
 
 		return this.client.api.interactions.createAutocompleteResponse(interaction.id, interaction.token, {
 			choices: embeds.length
