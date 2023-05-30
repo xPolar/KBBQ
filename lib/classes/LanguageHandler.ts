@@ -36,10 +36,10 @@ export default class LanguageHandler {
 	 * Load all of our languages into our array.
 	 */
 	public async loadLanguages() {
-		for (const fileName of this.client.functions.getFiles(`${this.client.__dirname}/dist/languages/`, ".json")) {
-			const languageFile: LanguageOptions = await import(`../../languages/${fileName}`, {
-				assert: { type: "json" },
-			}).then((file) => file.default);
+		for (const fileName of this.client.functions.getFiles(`${this.client.__dirname}/dist/languages/`, ".js")) {
+			const languageFile: LanguageOptions = await import(`../../languages/${fileName}`).then((file) => file.default);
+
+			this.client.logger.debug(languageFile);
 
 			const language: Language = new Language(this.client, languageFile.LANGUAGE_ID! as LocaleString, {
 				enabled: languageFile.LANGUAGE_ENABLED!,

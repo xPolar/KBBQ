@@ -1,5 +1,5 @@
 import { writeFile } from "node:fs";
-import enUS from "./en-US.js";
+import enUS from "../en-US.js";
 
 const interfaceMap = new Map<string, string[]>();
 
