@@ -4,6 +4,7 @@ import process from "node:process";
 import { setInterval } from "node:timers";
 import type { APIRole, ClientOptions, MappedEvents } from "@discordjs/core";
 import { API, Client } from "@discordjs/core";
+import type { StatusRole } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
 import i18next from "i18next";
 import intervalPlural from "i18next-intervalplural-postprocessor";
@@ -76,23 +77,23 @@ export default class ExtendedClient extends Client {
 	/**
 	 * All of the different gauges we use for Metrics with Prometheus and Grafana.
 	 */
-	private readonly gauges: Map<keyof typeof metrics, Gauge>;
+	private readonly gauges = new Map<keyof typeof metrics, Gauge>();
 
 	/**
 	 * A map of guild ID to user ID, representing a guild and who owns it.
 	 */
-	public guildOwnersCache: Map<string, string>;
+	public guildOwnersCache = new Map<string, string>();
 
 	/**
 	 * Guild roles cache.
 	 */
 
-	public guildRolesCache: Map<string, Map<string, APIRole>>;
+	public guildRolesCache = new Map<string, Map<string, APIRole>>();
 
 	/**
 	 * Guild presence cache, representing a guild, and the presence of each user in the guild.
 	 */
-	public guildPresenceCache: Map<string, Map<string, string>>;
+	public guildPresenceCache = new Map<string, Map<string, string>>();
 
 	/**
 	 * An approximation of how many users the bot can see.
@@ -107,12 +108,12 @@ export default class ExtendedClient extends Client {
 	/**
 	 * A map of events that our client is listening to.
 	 */
-	public events: Map<keyof MappedEvents, EventHandler>;
+	public events = new Map<keyof MappedEvents, EventHandler>();
 
 	/**
 	 * A map of the application commands that the bot is currently handling.
 	 */
-	public applicationCommands: Map<string, ApplicationCommand>;
+	public applicationCommands = new Map<string, ApplicationCommand>();
 
 	/**
 	 * The application command handler for our bot.
@@ -122,7 +123,7 @@ export default class ExtendedClient extends Client {
 	/**
 	 * A map of the auto completes that the bot is currently handling.
 	 */
-	public autoCompletes: Map<string[], AutoComplete>;
+	public autoCompletes = new Map<string[], AutoComplete>();
 
 	/**
 	 * The auto complete handler for our bot.
@@ -132,7 +133,7 @@ export default class ExtendedClient extends Client {
 	/**
 	 * A map of the text commands that the bot is currently handling.
 	 */
-	public readonly textCommands: Map<string, TextCommand>;
+	public readonly textCommands = new Map<string, TextCommand>();
 
 	/**
 	 * The text command handler for our bot.
@@ -142,7 +143,12 @@ export default class ExtendedClient extends Client {
 	/**
 	 * A map of a guild ID to a set of user IDs, representing a guild and who is in a voice channel in the guild.
 	 */
-	public readonly usersInVoice: Map<string, Set<string>>;
+	public readonly usersInVoice = new Map<string, Set<string>>();
+
+	/**
+	 * A map of a guild ID to a Map of the required text for the string role to the role the user should receive.
+	 */
+	public readonly statusRolesCache = new Map<string, StatusRole[]>();
 
 	public constructor({ rest, ws }: ClientOptions) {
 		super({ rest, ws });
@@ -173,8 +179,6 @@ export default class ExtendedClient extends Client {
 			],
 		});
 
-		this.gauges = new Map<keyof typeof metrics, Gauge>();
-
 		for (const [key, gauge] of Object.entries(metrics)) {
 			this.gauges.set(
 				key as keyof typeof metrics,
@@ -184,10 +188,6 @@ export default class ExtendedClient extends Client {
 				}),
 			);
 		}
-
-		this.guildOwnersCache = new Map();
-		this.guildRolesCache = new Map();
-		this.guildPresenceCache = new Map();
 
 		this.approximateUserCount = 0;
 
@@ -229,19 +229,13 @@ export default class ExtendedClient extends Client {
 
 		this.languageHandler = new LanguageHandler(this);
 
-		this.applicationCommands = new Map();
 		this.applicationCommandHandler = new ApplicationCommandHandler(this);
 
-		this.autoCompletes = new Map();
 		this.autoCompleteHandler = new AutoCompleteHandler(this);
 
-		this.textCommands = new Map();
 		this.textCommandHandler = new TextCommandHandler(this);
 
-		this.events = new Map();
 		void this.loadEvents();
-
-		this.usersInVoice = new Map();
 	}
 
 	/**
@@ -260,6 +254,20 @@ export default class ExtendedClient extends Client {
 		await this.textCommandHandler.loadTextCommands();
 
 		setInterval(async () => this.rewardUsersInVoice(), 1_000 * 60);
+
+		const statusRoles = await this.prisma.statusRole.findMany({});
+
+		for (const statusRole of statusRoles) {
+			let roles = this.statusRolesCache.get(statusRole.guildId);
+
+			if (!roles) {
+				this.statusRolesCache.set(statusRole.guildId, []);
+				roles = [];
+			}
+
+			roles.push(statusRole);
+			this.statusRolesCache.set(statusRole.guildId, roles);
+		}
 	}
 
 	/**
@@ -301,7 +309,7 @@ export default class ExtendedClient extends Client {
 	 * Reward all users who are in a voice channel with some experience and increment the amount of minutes they've spent in a voice call this week.
 	 */
 	public async rewardUsersInVoice() {
-		const experience = Math.floor(Math.random() * (10 - 5) * 5) * 1; // Change the 1 at the end to change the multiplier.;
+		const experience = Number(Math.floor(Math.random() * (10 - 5) * 5)); //  Change the 1 at the end to change the multiplier.;
 		const currentWeek = this.functions.getWeekOfYear();
 
 		for (const [guildId, userIds] of this.usersInVoice) {

@@ -47,14 +47,20 @@ export default class PresenceUpdate extends EventHandler {
 
 			const validStatusRoleIds = new Set<string>();
 
-			const statusRoles = await this.client.prisma.statusRole.findMany({ where: { guildId: data.guild_id } });
+			const statusRoles = this.client.statusRolesCache.get(data.guild_id);
 
-			if (!statusRoles.length) return;
+			if (!statusRoles?.length) return;
 
 			for (const statusRole of statusRoles) {
 				const validRole = rolesInGuild.get(statusRole.roleId);
 				if (!validRole) {
-					await this.client.prisma.statusRole.delete({ where: { id: statusRole.id } });
+					this.client.statusRolesCache.set(
+						data.guild_id,
+						statusRoles.filter((statusR) => statusR.id !== statusRole.id),
+					);
+					await this.client.prisma.statusRole.delete({
+						where: { id: statusRole.id },
+					});
 
 					continue;
 				}
@@ -114,16 +120,22 @@ export default class PresenceUpdate extends EventHandler {
 		let removeOldRoles = false;
 
 		// eslint-disable-next-line no-warning-comments
-		const statusRoles = await this.client.prisma.statusRole.findMany({ where: { guildId: data.guild_id } }); // TODO: Cache this, currently we are doing a query for EVERY time that someone sets a custom presence that isn't cached. (This is hundreds to thousands a minute)
+		const statusRoles = this.client.statusRolesCache.get(data.guild_id);
 
-		if (!statusRoles.length) return;
+		if (!statusRoles?.length) return;
 
 		const messagesToSend: Record<string, Embed[]> = {};
 
 		for (const statusRole of statusRoles) {
 			const validRole = rolesInGuild.get(statusRole.roleId);
 			if (!validRole) {
-				await this.client.prisma.statusRole.delete({ where: { id: statusRole.id } });
+				this.client.statusRolesCache.set(
+					data.guild_id,
+					statusRoles.filter((statusR) => statusR.id !== statusRole.id),
+				);
+				await this.client.prisma.statusRole.delete({
+					where: { id: statusRole.id },
+				});
 
 				continue;
 			}

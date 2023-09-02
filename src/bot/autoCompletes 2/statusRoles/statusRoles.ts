@@ -36,14 +36,12 @@ export default class StatusRoles extends AutoComplete {
 				choices: [],
 			});
 
-		const statusRoles = (
-			await this.client.prisma.statusRole.findMany({
-				where: { guildId: interaction.guild_id! },
-			})
-		).filter((statusRole) => guildRoles.get(statusRole.roleId));
+		const statusRoles = this.client.statusRolesCache
+			.get(interaction.guild_id!)
+			?.filter((statusRole) => guildRoles.get(statusRole.roleId));
 
 		return this.client.api.interactions.createAutocompleteResponse(interaction.id, interaction.token, {
-			choices: statusRoles.length
+			choices: statusRoles?.length
 				? statusRoles.map((statusRole) => {
 						const role = guildRoles.get(statusRole.roleId)!;
 						let name = `${statusRole.requiredText}: ${role.name}`;

@@ -191,26 +191,38 @@ export default class StatusRole extends ApplicationCommand {
 				});
 
 			return Promise.all([
-				this.client.prisma.statusRole.upsert({
-					where: {
-						guildId_roleId_requiredText: {
+				this.client.prisma.statusRole
+					.upsert({
+						where: {
+							guildId_roleId_requiredText: {
+								guildId: interaction.guild_id!,
+								roleId,
+								requiredText,
+							},
+						},
+						create: {
 							guildId: interaction.guild_id!,
 							roleId,
 							requiredText,
+							channelId,
+							embedName,
 						},
-					},
-					create: {
-						guildId: interaction.guild_id!,
-						roleId,
-						requiredText,
-						channelId,
-						embedName,
-					},
-					update: {
-						embedName,
-						channelId,
-					},
-				}),
+						update: {
+							embedName,
+							channelId,
+						},
+					})
+					.then((result) => {
+						let statusRoles = this.client.statusRolesCache.get(interaction.guild_id!);
+
+						if (!statusRoles) {
+							this.client.statusRolesCache.set(interaction.guild_id!, []);
+							statusRoles = [];
+						}
+
+						statusRoles.filter((statusRole) => statusRole.id !== result.id).push(result);
+						this.client.statusRolesCache.set(interaction.guild_id!, statusRoles);
+					}),
 				this.client.api.interactions.reply(interaction.id, interaction.token, {
 					embeds: [
 						{
@@ -227,13 +239,29 @@ export default class StatusRole extends ApplicationCommand {
 			this.client.languageHandler.defaultLanguage!.get("STATUS_ROLE_DELETE_SUB_COMMAND_NAME")
 		) {
 			return Promise.all([
-				this.client.prisma.statusRole.delete({
-					where: {
-						id: interaction.arguments.strings![
-							this.client.languageHandler.defaultLanguage!.get("STATUS_ROLE_DELETE_SUB_COMMAND_STATUS_ROLE_CHOICE_NAME")
-						]!.value,
-					},
-				}),
+				this.client.prisma.statusRole
+					.delete({
+						where: {
+							id: interaction.arguments.strings![
+								this.client.languageHandler.defaultLanguage!.get(
+									"STATUS_ROLE_DELETE_SUB_COMMAND_STATUS_ROLE_CHOICE_NAME",
+								)
+							]!.value,
+						},
+					})
+					.then((result) => {
+						let statusRoles = this.client.statusRolesCache.get(interaction.guild_id!);
+
+						if (!statusRoles) {
+							this.client.statusRolesCache.set(interaction.guild_id!, []);
+							statusRoles = [];
+						}
+
+						this.client.statusRolesCache.set(
+							interaction.guild_id!,
+							statusRoles.filter((statusRole) => statusRole.id !== result.id),
+						);
+					}),
 				this.client.api.interactions.reply(interaction.id, interaction.token, {
 					embeds: [
 						{
