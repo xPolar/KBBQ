@@ -91,11 +91,14 @@ export default class ApplicationCommandHandler {
 					.bulkOverwriteGuildCommands(process.env.APPLICATION_ID, this.client.config.testGuildId, [])
 					// eslint-disable-next-line promise/prefer-await-to-callbacks, promise/prefer-await-to-then
 					.catch(async (error) => {
-						if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingAccess)
+						if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingAccess) {
 							this.client.logger.error(
 								null,
 								`I encountered DiscordAPIError: Missing Access in ${this.client.config.testGuildId} when trying to clear application commands in the test guild.`,
 							);
+
+							return;
+						}
 
 						await this.client.logger.sentry.captureWithExtras(error, {
 							"Guild ID": this.client.config.testGuildId,
@@ -145,11 +148,14 @@ export default class ApplicationCommandHandler {
 				)
 				// eslint-disable-next-line promise/prefer-await-to-callbacks, promise/prefer-await-to-then
 				.catch(async (error) => {
-					if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingAccess)
+					if (error instanceof DiscordAPIError && error.code === RESTJSONErrorCodes.MissingAccess) {
 						this.client.logger.error(
 							null,
 							`I encountered DiscordAPIError: Missing Access in ${this.client.config.testGuildId} when trying to set application commands in the test guild.`,
 						);
+
+						return;
+					}
 
 					await this.client.logger.sentry.captureWithExtras(error, {
 						"Guild ID": this.client.config.testGuildId,
