@@ -6,7 +6,7 @@
 		"build": "tsc && cross-env NODE_ENV=development node .",
 		"start": "cross-env NODE_ENV=production node .",
 		"prepare": "husky install",
-		"translate": "ts-node-esm languages/interface.ts && pnpm prettier typings/language.d.ts --write"
+		"translate": "ts-node-esm languages/util/interface.ts && pnpm prettier typings/language.d.ts --write"
 	},
 	"lint-staged": {
 		"**/*.{ts,json}": [
