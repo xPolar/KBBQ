@@ -21,7 +21,7 @@ export default {
 	 */
 	admins: ["619284841187246090"],
 	/* The ID for the test guild  */
-	testGuildId: "925264080250494977",
+	testGuildId: "800213121822097459",
 
 	/**
 	 * The presence that should be displayed when the bot starts running.
