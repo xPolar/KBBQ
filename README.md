@@ -1,6 +1,6 @@
 # KBBQ
 
-Welcome to the repository for the KBBQ bot, a bot created to help [KBBQ](https://discord.gg/kbbq).
+Welcome to the repository for the KBBQ bot, a bot created to help [KBBQ](https://discord.gg/call).
 
 ## Self Hosting
 
