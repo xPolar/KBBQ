@@ -53,6 +53,7 @@ export default {
 	ManageNicknames: "Manage Nicknames",
 	ManageRoles: "Manage Roles",
 	ManageWebhooks: "Manage Webhooks",
+	ManageGuildExpressions: "Manage Expressions",
 	ManageEmojisAndStickers: "Manage Emojis and Stickers",
 	UseApplicationCommands: "Use Application Commands",
 	RequestToSpeak: "Request to Speak",
@@ -64,6 +65,12 @@ export default {
 	SendMessagesInThreads: "Send Messages in Threads abd Posts",
 	UseEmbeddedActivities: "Use Activities",
 	ModerateMembers: "Timeout Members",
+	ViewCreatorMonetizationAnalytics: "View Creator Monetization Analytics",
+	UseSoundboard: "Use Soundboard",
+	UseExternalSounds: "Use External Sounds",
+	SendVoiceMessages: "Send Voice Messages",
+	CreateGuildExpressions: "Create Expressions",
+	CreateEvents: "Create Events",
 
 	INVALID_ARGUMENT_TITLE: "Invalid Argument",
 
