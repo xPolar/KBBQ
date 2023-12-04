@@ -51,6 +51,7 @@ export interface LanguageValues {
 	ManageNicknames: {};
 	ManageRoles: {};
 	ManageWebhooks: {};
+	ManageGuildExpressions: {};
 	ManageEmojisAndStickers: {};
 	UseApplicationCommands: {};
 	RequestToSpeak: {};
@@ -62,6 +63,12 @@ export interface LanguageValues {
 	SendMessagesInThreads: {};
 	UseEmbeddedActivities: {};
 	ModerateMembers: {};
+	ViewCreatorMonetizationAnalytics: {};
+	UseSoundboard: {};
+	UseExternalSounds: {};
+	SendVoiceMessages: {};
+	CreateGuildExpressions: {};
+	CreateEvents: {};
 	INVALID_ARGUMENT_TITLE: {};
 	INVALID_PATH_TITLE: {};
 	INVALID_PATH_DESCRIPTION: {};
