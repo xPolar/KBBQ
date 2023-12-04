@@ -322,12 +322,12 @@ export default class ApplicationCommandHandler {
 
 						if (
 							"members" in interaction.data.resolved &&
-							interaction.data.resolved.members[currentOption.value.toString()]
+							interaction.data.resolved.members![currentOption.value.toString()]
 						) {
 							if (!applicationCommandArguments.members) applicationCommandArguments.members = {};
 
 							applicationCommandArguments.members![currentOption.name] =
-								interaction.data.resolved.members[currentOption.value.toString()]!;
+								interaction.data.resolved.members![currentOption.value.toString()]!;
 						}
 
 						continue;
