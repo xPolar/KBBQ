@@ -85,9 +85,13 @@ export default class ExtendedClient extends Client {
 	public guildOwnersCache = new Map<string, string>();
 
 	/**
+	 * Guild channels cache.
+	 */
+	public readonly channelsCache: Map<string, string>;
+
+	/**
 	 * Guild roles cache.
 	 */
-
 	public guildRolesCache = new Map<string, Map<string, APIRole>>();
 
 	/**
@@ -154,6 +158,8 @@ export default class ExtendedClient extends Client {
 		super({ rest, ws });
 
 		this.api = new API(rest);
+
+		this.channelsCache = new Map();
 
 		this.config = Config;
 		this.config.version =
