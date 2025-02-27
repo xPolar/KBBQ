@@ -353,7 +353,7 @@ export default class Functions {
 		const context = canvas.getContext("2d");
 		context.fillStyle = "#6C3400";
 
-		const background = await this.canvas.loadImage("https://cdn.polar.blue/r/Frame_276.png");
+		const background = await this.canvas.loadImage("https://cdn.karalite.com/user_2Z1iHO0Px2py0XMFB2sy1mb631L/Frame_276.png");
 
 		context.drawImage(background, 0, 0);
 
